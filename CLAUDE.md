@@ -4,19 +4,22 @@ Discrete-event simulation of an image-processing API, built with [SimPy](https:/
 
 ## Model
 
-Single-server FIFO queue with an infinite buffer and a finite user pool:
+Two servers in sequence, each with its own FIFO infinite-buffer queue, plus a conditional routing decision, and a finite user pool:
 
-- **Arrivals**: `N_USUARIOS` users, each sending exactly one request. Interarrival times are exponential (`TAXA_CHEGADA`, rate λ) — a Poisson arrival process.
-- **Service**: one server, no parallelism (`simpy.Resource(capacity=1)`). Each request has an image size drawn `Uniform(TAMANHO_MIN, TAMANHO_MAX)` MB; processing time is linear in size: `TEMPO_BASE + tamanho_imagem * TEMPO_POR_UNIDADE`.
-- **Queue discipline**: FIFO, unbounded.
+- **Arrivals**: `N_USUARIOS` users, each sending exactly one request. Interarrival times are exponential (`TAXA_CHEGADA`, rate λ) — a Poisson arrival process. Each request's image size is drawn once at arrival, `Uniform(TAMANHO_MIN, TAMANHO_MAX)` MB.
+- **Stage 1 — `Validador`**: one server, no parallelism (`simpy.Resource(capacity=1)`), queue `FilaValidacao`. Validation time is `Uniform(TEMPO_VALIDACAO_MIN, TEMPO_VALIDACAO_MAX)`.
+- **Routing decision (conditional)**: after validation, requests with `tamanho_imagem < LIMIAR_ROTA_MB` skip straight to exit ("rota rápida" — already small enough); the rest proceed to stage 2 ("rota completa").
+- **Stage 2 — `Processador`**: one server, no parallelism, queue `FilaProcessamento`, only for "rota completa" requests. Processing time is linear in size: `TEMPO_BASE + tamanho_imagem * TEMPO_POR_UNIDADE`.
+- **Queue discipline**: FIFO, unbounded, for both queues.
 - **Stop condition**: simulation ends naturally once all `N_USUARIOS` requests have arrived and finished (no explicit `until=`).
 
-All tunable parameters live as named constants at the top of `api_simulator.py` (`N_USUARIOS`, `TAXA_CHEGADA`, `TAMANHO_MIN`/`TAMANHO_MAX`, `TEMPO_BASE`, `TEMPO_POR_UNIDADE`, `SEMENTE_ALEATORIA`).
+All tunable parameters live as named constants at the top of `api_simulator.py` (`N_USUARIOS`, `TAXA_CHEGADA`, `TAMANHO_MIN`/`TAMANHO_MAX`, `TEMPO_BASE`, `TEMPO_POR_UNIDADE`, `TEMPO_VALIDACAO_MIN`/`TEMPO_VALIDACAO_MAX`, `LIMIAR_ROTA_MB`, `SEMENTE_ALEATORIA`).
 
 ## Files
 
-- `api_simulator.py` — the simulation: config, `Estatisticas` collector, `processar_requisicao` / `gerador_usuarios` processes, `imprimir_relatorio` (summary stats incl. utilization, throughput, and a Little's Law check), `imprimir_tabela_amostra` (per-request table: arrival time, wait time, image size, processing time).
-- `plot_distributions.py` — samples the same two distributions the simulation uses (interarrival time, processing time) and plots empirical histograms against their theoretical PDFs, saved to `distributions.png`. Imports its constants directly from `api_simulator.py` so it stays in sync with config changes.
+- `api_simulator.py` — the simulation: config, `Estatisticas` collector, `processar_requisicao` / `gerador_usuarios` processes (two sequential stages — `Validador` then, conditionally, `Processador` — with a routing decision in between), `executar_simulacao(semente)` (runs one simulation for a given seed, returns `(ambiente, estatisticas)`), `calcular_metricas(ambiente, estatisticas)` (returns the summary metrics as a dict), `imprimir_relatorio` (prints `calcular_metricas`'s output), `imprimir_tabela_amostra` (per-request table: image size, route taken, wait/service time at each stage).
+- `plot_distributions.py` — samples the same three distributions the simulation uses (interarrival time, validation time, processing time) and plots empirical histograms against their theoretical PDFs, saved to `distributions.png`. Imports its constants directly from `api_simulator.py` so it stays in sync with config changes.
+- `executar_replicacoes.py` — runs `N_REPLICACOES` (10) independent replications, each with its own seed (`SEMENTE_ALEATORIA + 1 + i`, deliberately distinct from the single-run reference seed), reusing `executar_simulacao`/`calcular_metricas` from `api_simulator.py`; writes one row per replication to `replicacoes.csv`, one column per metric.
 - `requirements.txt` — `simpy` (plus `matplotlib`/`numpy` needed only for `plot_distributions.py`).
 
 ## Running
@@ -27,6 +30,7 @@ python3 -m venv .venv
 .venv/bin/pip install matplotlib numpy  # only needed for plot_distributions.py
 .venv/bin/python api_simulator.py
 .venv/bin/python plot_distributions.py
+.venv/bin/python executar_replicacoes.py
 ```
 
 ## Conventions

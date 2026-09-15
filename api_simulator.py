@@ -1,10 +1,13 @@
 """
 Simulação de fila de API (SimPy).
 
-Modela uma API de processamento de imagens com um único servidor, disciplina
-FIFO e fila infinita. Um grupo finito de usuários envia exatamente uma
-requisição cada; as requisições chegam como um processo de Poisson e levam
-mais tempo para processar quanto maior a imagem (tamanho uniforme).
+Modela uma API de processamento de imagens com dois processos em sequência —
+Validador e Processador, cada um com fila própria FIFO e fila infinita — e
+uma decisão de rota condicional: imagens pequenas (já otimizadas) saem direto
+após a validação, sem passar pelo processamento pesado. Um grupo finito de
+usuários envia exatamente uma requisição cada; as requisições chegam como um
+processo de Poisson e levam mais tempo para processar quanto maior a imagem
+(tamanho uniforme).
 """
 
 import random
@@ -24,91 +27,173 @@ TAMANHO_MAX = 10.0           # limite superior do tamanho da imagem (MB)
 TEMPO_BASE = 0.1             # overhead fixo por requisição (seg)
 TEMPO_POR_UNIDADE = 0.15     # segundos de processamento por MB de imagem
 
+TEMPO_VALIDACAO_MIN = 0.02   # limite inferior do tempo de validação (seg)
+TEMPO_VALIDACAO_MAX = 0.05   # limite superior do tempo de validação (seg)
+
+LIMIAR_ROTA_MB = 3.0         # decisão de rota: abaixo disso, imagem já é
+                              # considerada otimizada e sai direto após a
+                              # validação, sem passar pelo Processador
+
 SEMENTE_ALEATORIA = 42
 
 
 @dataclass
 class Estatisticas:
-    tempos_espera: list = field(default_factory=list)
+    tempos_espera_validacao: list = field(default_factory=list)
+    tempos_validacao: list = field(default_factory=list)
+    tempos_espera_processamento: list = field(default_factory=list)
+    tempos_processamento: list = field(default_factory=list)  # só rota completa
     tempos_resposta: list = field(default_factory=list)
-    tempos_processamento: list = field(default_factory=list)
-    historico_tamanho_fila: list = field(default_factory=list)  # (tempo, tamanho)
+    contagem_rota_rapida: int = 0
+    contagem_rota_completa: int = 0
+    historico_tamanho_fila_validacao: list = field(default_factory=list)  # (tempo, tamanho)
+    historico_tamanho_fila_processamento: list = field(default_factory=list)  # (tempo, tamanho)
     registros: list = field(default_factory=list)  # detalhe por requisição, um dict cada
 
 
-def registrar_tamanho_fila(ambiente, servidor, estatisticas):
-    tamanho = len(servidor.queue) + servidor.count
-    estatisticas.historico_tamanho_fila.append((ambiente.now, tamanho))
+def registrar_tamanho_fila(ambiente, recurso, historico):
+    tamanho = len(recurso.queue) + recurso.count
+    historico.append((ambiente.now, tamanho))
 
 
-def processar_requisicao(ambiente, servidor, estatisticas, id_usuario):
+def processar_requisicao(ambiente, validador, processador, estatisticas, id_usuario):
     tempo_chegada = ambiente.now
+    tamanho_imagem = random.uniform(TAMANHO_MIN, TAMANHO_MAX)
 
-    with servidor.request() as requisicao:
-        yield requisicao
-        registrar_tamanho_fila(ambiente, servidor, estatisticas)
+    with validador.request() as requisicao_validacao:
+        yield requisicao_validacao
+        registrar_tamanho_fila(ambiente, validador, estatisticas.historico_tamanho_fila_validacao)
 
-        tempo_espera = ambiente.now - tempo_chegada
-        estatisticas.tempos_espera.append(tempo_espera)
+        tempo_espera_validacao = ambiente.now - tempo_chegada
+        estatisticas.tempos_espera_validacao.append(tempo_espera_validacao)
 
-        tamanho_imagem = random.uniform(TAMANHO_MIN, TAMANHO_MAX)
-        tempo_processamento = TEMPO_BASE + tamanho_imagem * TEMPO_POR_UNIDADE
-        estatisticas.tempos_processamento.append(tempo_processamento)
+        tempo_validacao = random.uniform(TEMPO_VALIDACAO_MIN, TEMPO_VALIDACAO_MAX)
+        estatisticas.tempos_validacao.append(tempo_validacao)
 
-        yield ambiente.timeout(tempo_processamento)
+        yield ambiente.timeout(tempo_validacao)
 
-    registrar_tamanho_fila(ambiente, servidor, estatisticas)
+    registrar_tamanho_fila(ambiente, validador, estatisticas.historico_tamanho_fila_validacao)
+
+    # Decisão de rota condicional: imagens já pequenas/otimizadas (abaixo do
+    # limiar) saem direto, sem passar pelo processamento pesado.
+    tempo_espera_processamento = None
+    tempo_processamento = None
+
+    if tamanho_imagem >= LIMIAR_ROTA_MB:
+        rota = "completa"
+        estatisticas.contagem_rota_completa += 1
+
+        with processador.request() as requisicao_processamento:
+            yield requisicao_processamento
+            registrar_tamanho_fila(ambiente, processador, estatisticas.historico_tamanho_fila_processamento)
+
+            tempo_espera_processamento = ambiente.now - tempo_chegada - tempo_espera_validacao - tempo_validacao
+            estatisticas.tempos_espera_processamento.append(tempo_espera_processamento)
+
+            tempo_processamento = TEMPO_BASE + tamanho_imagem * TEMPO_POR_UNIDADE
+            estatisticas.tempos_processamento.append(tempo_processamento)
+
+            yield ambiente.timeout(tempo_processamento)
+
+        registrar_tamanho_fila(ambiente, processador, estatisticas.historico_tamanho_fila_processamento)
+    else:
+        rota = "rapida"
+        estatisticas.contagem_rota_rapida += 1
+
     tempo_resposta = ambiente.now - tempo_chegada
     estatisticas.tempos_resposta.append(tempo_resposta)
 
     estatisticas.registros.append({
         "id_usuario": id_usuario,
         "tempo_chegada": tempo_chegada,
-        "tempo_espera": tempo_espera,
         "tamanho_imagem": tamanho_imagem,
+        "rota": rota,
+        "tempo_espera_validacao": tempo_espera_validacao,
+        "tempo_validacao": tempo_validacao,
+        "tempo_espera_processamento": tempo_espera_processamento,
         "tempo_processamento": tempo_processamento,
         "tempo_resposta": tempo_resposta,
     })
 
 
-def gerador_usuarios(ambiente, servidor, estatisticas):
+def gerador_usuarios(ambiente, validador, processador, estatisticas):
     for id_usuario in range(N_USUARIOS):
         yield ambiente.timeout(random.expovariate(TAXA_CHEGADA))
-        ambiente.process(processar_requisicao(ambiente, servidor, estatisticas, id_usuario))
-        registrar_tamanho_fila(ambiente, servidor, estatisticas)
+        ambiente.process(processar_requisicao(ambiente, validador, processador, estatisticas, id_usuario))
+        registrar_tamanho_fila(ambiente, validador, estatisticas.historico_tamanho_fila_validacao)
 
 
 def media(valores):
     return sum(valores) / len(valores) if valores else 0.0
 
 
-def imprimir_relatorio(ambiente, estatisticas):
+def calcular_metricas(ambiente, estatisticas):
     tempo_total = ambiente.now
-    utilizacao = sum(estatisticas.tempos_processamento) / tempo_total if tempo_total else 0.0
-    vazao = len(estatisticas.tempos_resposta) / tempo_total if tempo_total else 0.0
+    n_completadas = len(estatisticas.tempos_resposta)
 
-    espera_media = media(estatisticas.tempos_espera)
+    utilizacao_validador = sum(estatisticas.tempos_validacao) / tempo_total if tempo_total else 0.0
+    utilizacao_processador = sum(estatisticas.tempos_processamento) / tempo_total if tempo_total else 0.0
+    vazao = n_completadas / tempo_total if tempo_total else 0.0
+
+    espera_validacao_media = media(estatisticas.tempos_espera_validacao)
+    espera_processamento_media = media(estatisticas.tempos_espera_processamento)
     resposta_media = media(estatisticas.tempos_resposta)
-    tamanho_medio_fila = media([tamanho for _, tamanho in estatisticas.historico_tamanho_fila])
+    tamanho_medio_fila_validacao = media([t for _, t in estatisticas.historico_tamanho_fila_validacao])
+    tamanho_medio_fila_processamento = media([t for _, t in estatisticas.historico_tamanho_fila_processamento])
+
+    percentual_rota_rapida = estatisticas.contagem_rota_rapida / n_completadas if n_completadas else 0.0
+    percentual_rota_completa = estatisticas.contagem_rota_completa / n_completadas if n_completadas else 0.0
 
     # Verificação da Lei de Little: L ~= lambda_efetivo * W
     lei_little_L = vazao * resposta_media
 
+    return {
+        "n_completadas": n_completadas,
+        "tempo_total": tempo_total,
+        "vazao": vazao,
+        "contagem_rota_rapida": estatisticas.contagem_rota_rapida,
+        "contagem_rota_completa": estatisticas.contagem_rota_completa,
+        "percentual_rota_rapida": percentual_rota_rapida,
+        "percentual_rota_completa": percentual_rota_completa,
+        "utilizacao_validador": utilizacao_validador,
+        "espera_validacao_media": espera_validacao_media,
+        "tamanho_medio_fila_validacao": tamanho_medio_fila_validacao,
+        "utilizacao_processador": utilizacao_processador,
+        "espera_processamento_media": espera_processamento_media,
+        "tamanho_medio_fila_processamento": tamanho_medio_fila_processamento,
+        "resposta_media": resposta_media,
+        "resposta_maxima": max(estatisticas.tempos_resposta, default=0.0),
+        "lei_little_L": lei_little_L,
+    }
+
+
+def imprimir_relatorio(ambiente, estatisticas):
+    m = calcular_metricas(ambiente, estatisticas)
+
     print("=" * 50)
     print("RESUMO DA SIMULAÇÃO DE FILA DA API")
     print("=" * 50)
-    print(f"Requisições concluídas:  {len(estatisticas.tempos_resposta)} / {N_USUARIOS}")
-    print(f"Tempo total simulado:    {tempo_total:.2f} s")
-    print(f"Vazão:                   {vazao:.4f} req/s")
-    print(f"Utilização do servidor:  {utilizacao:.2%}")
+    print(f"Requisições concluídas:  {m['n_completadas']} / {N_USUARIOS}")
+    print(f"Tempo total simulado:    {m['tempo_total']:.2f} s")
+    print(f"Vazão:                   {m['vazao']:.4f} req/s")
     print("-" * 50)
-    print(f"Tempo médio de espera:   {espera_media:.4f} s")
-    print(f"Tempo máximo de espera:  {max(estatisticas.tempos_espera, default=0):.4f} s")
-    print(f"Tempo médio de resposta: {resposta_media:.4f} s")
-    print(f"Tempo máximo de resposta:{max(estatisticas.tempos_resposta, default=0):.4f} s")
-    print(f"Tamanho médio da fila:   {tamanho_medio_fila:.4f}")
+    print(f"Rota rápida (sem Processador):   {m['contagem_rota_rapida']} "
+          f"({m['percentual_rota_rapida']:.2%})")
+    print(f"Rota completa (com Processador): {m['contagem_rota_completa']} "
+          f"({m['percentual_rota_completa']:.2%})")
     print("-" * 50)
-    print(f"Verificação Lei de Little: L ~= {lei_little_L:.4f} "
+    print(f"Utilização do Validador:    {m['utilizacao_validador']:.2%}")
+    print(f"Tempo médio de espera:      {m['espera_validacao_media']:.4f} s")
+    print(f"Tamanho médio da fila:      {m['tamanho_medio_fila_validacao']:.4f}")
+    print("-" * 50)
+    print(f"Utilização do Processador:  {m['utilizacao_processador']:.2%}")
+    print(f"Tempo médio de espera:      {m['espera_processamento_media']:.4f} s")
+    print(f"Tamanho médio da fila:      {m['tamanho_medio_fila_processamento']:.4f}")
+    print("-" * 50)
+    print(f"Tempo médio de resposta:    {m['resposta_media']:.4f} s")
+    print(f"Tempo máximo de resposta:   {m['resposta_maxima']:.4f} s")
+    print("-" * 50)
+    print(f"Verificação Lei de Little: L ~= {m['lei_little_L']:.4f} "
           f"(vazão x tempo médio de resposta)")
     print("=" * 50)
 
@@ -116,31 +201,42 @@ def imprimir_relatorio(ambiente, estatisticas):
 def imprimir_tabela_amostra(estatisticas, n=10):
     linhas = sorted(estatisticas.registros, key=lambda r: r["id_usuario"])[:n]
 
+    def fmt(valor):
+        return f"{valor:.4f}" if valor is not None else "-"
+
     print(f"Primeiras {len(linhas)} requisições")
-    print("-" * 84)
-    print(f"{'id_usuario':>10} | {'tempo_chegada':>13} | {'tempo_espera':>12} | "
-          f"{'tamanho_imagem':>14} | {'tempo_processamento':>19}")
-    print("-" * 84)
+    print("-" * 100)
+    print(f"{'id_usuario':>10} | {'tamanho_imagem':>14} | {'rota':>8} | "
+          f"{'espera_valid':>12} | {'tempo_valid':>11} | "
+          f"{'espera_proc':>11} | {'tempo_proc':>10}")
+    print("-" * 100)
     for r in linhas:
-        print(f"{r['id_usuario']:>10} | {r['tempo_chegada']:>13.4f} | "
-              f"{r['tempo_espera']:>12.4f} | {r['tamanho_imagem']:>14.4f} | "
-              f"{r['tempo_processamento']:>19.4f}")
-    print("-" * 84)
+        print(f"{r['id_usuario']:>10} | {r['tamanho_imagem']:>14.4f} | {r['rota']:>8} | "
+              f"{fmt(r['tempo_espera_validacao']):>12} | {fmt(r['tempo_validacao']):>11} | "
+              f"{fmt(r['tempo_espera_processamento']):>11} | {fmt(r['tempo_processamento']):>10}")
+    print("-" * 100)
+
+
+def executar_simulacao(semente):
+    random.seed(semente)
+
+    ambiente = simpy.Environment()
+    validador = simpy.Resource(ambiente, capacity=1)
+    processador = simpy.Resource(ambiente, capacity=1)
+    estatisticas = Estatisticas()
+
+    ambiente.process(gerador_usuarios(ambiente, validador, processador, estatisticas))
+    ambiente.run()
+
+    return ambiente, estatisticas
 
 
 def principal():
-    random.seed(SEMENTE_ALEATORIA)
-
-    ambiente = simpy.Environment()
-    servidor = simpy.Resource(ambiente, capacity=1)
-    estatisticas = Estatisticas()
-
-    ambiente.process(gerador_usuarios(ambiente, servidor, estatisticas))
-    ambiente.run()
+    ambiente, estatisticas = executar_simulacao(SEMENTE_ALEATORIA)
 
     imprimir_relatorio(ambiente, estatisticas)
     print()
-    imprimir_tabela_amostra(estatisticas)
+    # imprimir_tabela_amostra(estatisticas)
 
 
 if __name__ == "__main__":

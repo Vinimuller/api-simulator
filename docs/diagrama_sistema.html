@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Modelo conceitual — API de processamento de imagens</title>
+<style>
+  :root {
+    --azul: #2f6fed;
+    --azul-claro-bg: #eaf1fd;
+    --azul-claro-borda: #2f6fed;
+    --navy: #16305a;
+    --verde: #1e7d3c;
+    --laranja: #e08a2b;
+    --texto: #1c2430;
+    --texto-suave: #5b6472;
+    --borda: #e3e7ee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 56px 72px;
+    background: #ffffff;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--texto);
+  }
+  .eyebrow {
+    color: var(--laranja);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    margin: 0 0 12px;
+  }
+  h1 {
+    color: var(--navy);
+    font-size: 40px;
+    line-height: 1.15;
+    margin: 0 0 36px;
+  }
+  .painel {
+    border: 1px solid var(--borda);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+    padding: 40px 40px 32px;
+  }
+  .fluxo {
+    display: grid;
+    grid-template-columns: 1fr 44px 1fr 44px 1fr 44px 1fr 44px 1fr 44px 1fr;
+    align-items: center;
+    row-gap: 10px;
+  }
+  .caixa {
+    width: 100%;
+    min-height: 96px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 10px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 15px;
+    text-align: center;
+  }
+  .caixa.chegadas { background: var(--azul); }
+  .caixa.fila { background: var(--azul-claro-bg); color: var(--navy); border: 2px solid var(--azul-claro-borda); }
+  .caixa.validador { background: var(--laranja); }
+  .caixa.processador { background: var(--navy); }
+  .caixa.concluido { background: var(--verde); }
+  .caixa.rota-rapida-nota {
+    grid-column: 5;
+    justify-self: center;
+    margin-top: 4px;
+    font-size: 12.5px;
+    color: var(--laranja);
+    font-weight: 700;
+    text-align: center;
+  }
+  .legenda-etapa {
+    align-self: start;
+    text-align: center;
+    font-size: 13px;
+    color: var(--texto-suave);
+  }
+  .legenda-etapa b { color: var(--texto); }
+  .seta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .info-lista {
+    margin-top: 32px;
+    padding: 0;
+    list-style: none;
+  }
+  .info-lista li {
+    position: relative;
+    padding-left: 18px;
+    margin-bottom: 10px;
+    font-size: 14.5px;
+    line-height: 1.4;
+  }
+  .info-lista li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--azul);
+    font-weight: 700;
+  }
+  .info-lista b { font-weight: 700; }
+  .subtitulo {
+    margin: 28px 0 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--navy);
+  }
+  .info-lista.compacta { margin-top: 0; }
+  .rodape-legenda {
+    margin-top: 28px;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--texto-suave);
+  }
+  .rodape-legenda b { color: var(--texto); font-style: normal; }
+  footer {
+    margin-top: 40px;
+    font-size: 12.5px;
+    color: var(--texto-suave);
+  }
+</style>
+</head>
+<body>
+
+  <p class="eyebrow">REPRESENTAÇÃO DO SISTEMA</p>
+  <h1>API de compressão de imagens</h1>
+
+  <div class="painel">
+    <div class="fluxo">
+
+      <div class="caixa chegadas">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12"/>
+          <path d="M7 10l5 5 5-5"/>
+          <path d="M4 19h16"/>
+        </svg>
+        Chegadas
+      </div>
+
+      <div class="seta">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9aa4b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/>
+          <path d="M13 6l6 6-6 6"/>
+        </svg>
+      </div>
+
+      <div class="caixa fila">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="3"/>
+          <circle cx="16" cy="8" r="3"/>
+          <path d="M2 20c0-3 2.7-5 6-5s6 2 6 5"/>
+          <path d="M10 20c0-3 2.7-5 6-5s6 2 6 5"/>
+        </svg>
+        FilaValidacao
+      </div>
+
+      <div class="seta">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9aa4b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/>
+          <path d="M13 6l6 6-6 6"/>
+        </svg>
+      </div>
+
+      <div class="caixa validador">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 12l2 2 4-4"/>
+          <circle cx="12" cy="12" r="9"/>
+        </svg>
+        Validador
+      </div>
+
+      <div class="seta">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9aa4b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/>
+          <path d="M13 6l6 6-6 6"/>
+        </svg>
+      </div>
+
+      <div class="caixa fila">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="3"/>
+          <circle cx="16" cy="8" r="3"/>
+          <path d="M2 20c0-3 2.7-5 6-5s6 2 6 5"/>
+          <path d="M10 20c0-3 2.7-5 6-5s6 2 6 5"/>
+        </svg>
+        FilaProcessamento
+      </div>
+
+      <div class="seta">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9aa4b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/>
+          <path d="M13 6l6 6-6 6"/>
+        </svg>
+      </div>
+
+      <div class="caixa processador">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.65 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.65a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.65a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.35 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15z"/>
+        </svg>
+        Processador
+      </div>
+
+      <div class="seta">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9aa4b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/>
+          <path d="M13 6l6 6-6 6"/>
+        </svg>
+      </div>
+
+      <div class="caixa concluido">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M8.5 12.5l2.4 2.4 4.6-5.4"/>
+        </svg>
+        Concluído
+      </div>
+
+      <div class="legenda-etapa"><b>EXPO(0,8) s</b><br>intervalo entre requests<br><b>Uniform(1, 10) MB</b><br>tamanho da imagem</div>
+      <div></div>
+      <div class="legenda-etapa"><b>FIFO</b></div>
+      <div></div>
+      <div class="legenda-etapa"><b>Uniform(0,02, 0,05)s</b><br>decisão de rota: tamanho &lt; 3 MB não é processado</div>
+      <div></div>
+      <div class="legenda-etapa"><b>FIFO</b></div>
+      <div></div>
+      <div class="legenda-etapa">tempo de processamento com relação linear ao tamanho da imagem</div>
+      <div></div>
+      <div class="legenda-etapa"><b>indicadores</b><br>tempos de espera e resposta</div>
+
+    </div>
+
+    <ul class="info-lista">
+      <li><b>Entidades:</b> requisições de processamento de imagem: sequência de 1000 requisições</li>
+      <li><b>Decisão de rota (condicional):</b> após o Validador, requisições com imagem abaixo de 3 MB seguem direto para a saída (rota rápida); as demais seguem para o Processador (rota completa).</li>
+    </ul>
+
+    <p class="subtitulo">Recursos</p>
+    <ul class="info-lista compacta">
+      <li><b>Validador:</b> verifica a requisição e mede o tamanho da imagem.</li>
+      <li><b>Processador:</b> um servidor, processa uma requisição por vez, apenas na rota completa. Tempo de processamento varia de acordo com o tamanho da imagem.</li>
+    </ul>
+
+    <p class="subtitulo">Classificação do sistema</p>
+    <ul class="info-lista compacta">
+      <li><b>Dinâmico:</b> a quantidade de requests pode variar com o tempo.</li>
+      <li><b>Estocástico:</b> depende dos intervalos de chegada dos requests, que não são fixos no tempo.</li>
+      <li><b>Discreto:</b> avança de acordo com a conclusão de cada request.</li>
+    </ul>
+
+    <p class="subtitulo">Questoes de Estudo</p>
+    <ul class="info-lista compacta">
+      <li>1. Com a taxa de chegada atual (0,8 req/s) e um único processador, o tempo médio de resposta fica abaixo de 2 segundos?</li>
+      <li>2. Com um único processador, a utilização do servidor ultrapassa 90% sob a taxa de chegada atual?</li>
+      <li>3. Com a decisão de rota atual (limiar de 3 MB), a rota rápida responde a pelo menos 20% das requisições?</li>
+    </ul>
+
+    <!-- <p class="rodape-legenda">
+      <b>Legenda do fluxo:</b> as requisições chegam segundo <b>Exponential(λ = 0,8 req/s)</b>,
+      aguardam em <b>FilaProcessamento</b> (FIFO, buffer infinito), são atendidas em
+      <b>Processador</b> com tempo linear no tamanho da imagem, e saem <b>Concluídas</b>.
+    </p> -->
+  </div>
+
+  <footer>api-simulator · Simulação e Modelagem de Sistemas</footer>
+
+</body>
+</html>

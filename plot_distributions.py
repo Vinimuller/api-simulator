@@ -1,7 +1,9 @@
 """
-Visualiza as duas distribuições de probabilidade que orientam a simulação:
+Visualiza as três distribuições de probabilidade que orientam a simulação:
 1) Intervalo entre chegadas de requisições -> Exponencial(taxa=TAXA_CHEGADA)
-2) Tempo de processamento por requisição -> TEMPO_BASE + Uniforme(TAMANHO_MIN, TAMANHO_MAX) * TEMPO_POR_UNIDADE
+2) Tempo de validação por requisição -> Uniforme(TEMPO_VALIDACAO_MIN, TEMPO_VALIDACAO_MAX)
+3) Tempo de processamento por requisição (rota completa) ->
+   TEMPO_BASE + Uniforme(TAMANHO_MIN, TAMANHO_MAX) * TEMPO_POR_UNIDADE
    (uma transformação linear de uma variável uniforme, portanto também é uniforme)
 
 Gera N_USUARIOS amostras de cada uma (mesmo tamanho de amostra da simulação
@@ -21,6 +23,8 @@ from api_simulator import (
     TAXA_CHEGADA,
     TEMPO_BASE,
     TEMPO_POR_UNIDADE,
+    TEMPO_VALIDACAO_MAX,
+    TEMPO_VALIDACAO_MIN,
 )
 
 random.seed(SEMENTE_ALEATORIA)
@@ -31,13 +35,15 @@ random.seed(SEMENTE_ALEATORIA)
 
 amostras_intervalo_chegada = [random.expovariate(TAXA_CHEGADA) for _ in range(N_USUARIOS)]
 
+amostras_tempo_validacao = [random.uniform(TEMPO_VALIDACAO_MIN, TEMPO_VALIDACAO_MAX) for _ in range(N_USUARIOS)]
+
 tamanhos_imagem = [random.uniform(TAMANHO_MIN, TAMANHO_MAX) for _ in range(N_USUARIOS)]
 amostras_tempo_processamento = [TEMPO_BASE + tamanho * TEMPO_POR_UNIDADE for tamanho in tamanhos_imagem]
 
 proc_min = TEMPO_BASE + TAMANHO_MIN * TEMPO_POR_UNIDADE
 proc_max = TEMPO_BASE + TAMANHO_MAX * TEMPO_POR_UNIDADE
 
-fig, eixos = plt.subplots(1, 2, figsize=(12, 5))
+fig, eixos = plt.subplots(1, 3, figsize=(17, 5))
 
 # --- Intervalo entre chegadas: Exponencial(taxa=TAXA_CHEGADA) ---
 eixo = eixos[0]
@@ -52,8 +58,22 @@ eixo.set_xlabel("Intervalo entre chegadas (s)")
 eixo.set_ylabel("Densidade")
 eixo.legend()
 
-# --- Tempo de processamento: TEMPO_BASE + Uniforme(TAMANHO_MIN, TAMANHO_MAX) * TEMPO_POR_UNIDADE ---
+# --- Tempo de validação: Uniforme(TEMPO_VALIDACAO_MIN, TEMPO_VALIDACAO_MAX) ---
 eixo = eixos[1]
+eixo.hist(amostras_tempo_validacao, bins=40, density=True, alpha=0.6,
+          color="mediumpurple", edgecolor="white", label="Tempos de validação amostrados")
+altura_validacao = 1.0 / (TEMPO_VALIDACAO_MAX - TEMPO_VALIDACAO_MIN)
+eixo.plot([TEMPO_VALIDACAO_MIN, TEMPO_VALIDACAO_MIN, TEMPO_VALIDACAO_MAX, TEMPO_VALIDACAO_MAX],
+          [0, altura_validacao, altura_validacao, 0],
+          color="darkred", linewidth=2,
+          label=f"FDP Uniforme [{TEMPO_VALIDACAO_MIN:.2f}, {TEMPO_VALIDACAO_MAX:.2f}] s")
+eixo.set_title("Validação de requisições\ntempo de validação ~ Uniforme")
+eixo.set_xlabel("Tempo de validação (s)")
+eixo.set_ylabel("Densidade")
+eixo.legend()
+
+# --- Tempo de processamento: TEMPO_BASE + Uniforme(TAMANHO_MIN, TAMANHO_MAX) * TEMPO_POR_UNIDADE ---
+eixo = eixos[2]
 eixo.hist(amostras_tempo_processamento, bins=40, density=True, alpha=0.6,
           color="seagreen", edgecolor="white", label="Tempos de processamento amostrados")
 altura = 1.0 / (proc_max - proc_min)
