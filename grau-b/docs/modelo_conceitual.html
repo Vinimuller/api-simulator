@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modelo conceitual: Processamento de Imagens de Drones</title>
+<style>
+  :root {
+    color-scheme: light;
+    --azul-escuro: #0f3d7a;
+    --azul: #2b6cc4;
+    --azul-claro: #e8f0fa;
+    --borda: #d3e0f2;
+    --verde: #2e7d32;
+    --laranja: #e8922e;
+    --laranja-texto: #b8660f;
+    --laranja-claro: #fff3e3;
+    --texto: #1c2b44;
+    --texto-suave: #5a6a82;
+    --fundo: #ffffff;
+    --zebra: #f5f8fc;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .pagina { max-width: 1120px; margin: 0 auto; padding: 48px 32px 32px; }
+
+  .sobrelinha {
+    margin: 0 0 6px;
+    color: var(--laranja-texto);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  h1, h2, h3 { color: var(--azul-escuro); font-weight: 700; line-height: 1.2; }
+  h1 { margin: 0 0 16px; font-size: 40px; text-wrap: balance; }
+  h2 { margin: 0 0 24px; font-size: 32px; }
+  h3 { margin: 40px 0 12px; font-size: 22px; }
+  p { margin: 0 0 14px; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 8px; }
+  strong { font-weight: 700; }
+
+  a { color: var(--azul); }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--azul-claro);
+    color: var(--azul-escuro);
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    overflow-wrap: anywhere;
+  }
+
+  section { margin-top: 64px; scroll-margin-top: 16px; }
+
+  .introducao { max-width: 820px; font-size: 18px; }
+
+  .sumario {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 24px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .sumario li { margin: 0; }
+  .sumario a {
+    display: block;
+    padding: 6px 14px;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    background: var(--azul-claro);
+    color: var(--azul-escuro);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .sumario a:hover { background: var(--borda); }
+
+  .aviso {
+    margin: 20px 0;
+    padding: 14px 18px;
+    border: 1px solid #f3d3a8;
+    border-radius: 8px;
+    background: var(--laranja-claro);
+  }
+  .aviso p:last-child { margin-bottom: 0; }
+
+  .cartao-principal {
+    padding: 24px;
+    border: 2px solid var(--borda);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 3px 12px rgba(43, 108, 196, 0.14);
+  }
+
+  figure { margin: 20px 0 8px; }
+  figure img { display: block; width: 100%; height: auto; border-radius: 6px; }
+  figcaption, .legenda {
+    color: var(--texto-suave);
+    font-style: italic;
+  }
+  figcaption { margin-top: 12px; font-size: 15px; text-align: center; }
+  .legenda { margin-top: 20px; }
+  .legenda strong { font-style: italic; }
+
+  .grade { display: grid; gap: 16px; margin: 16px 0 20px; }
+  .grade-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grade-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grade-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+  .cartao {
+    padding: 20px;
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    background: var(--azul-claro);
+  }
+  .cartao h4 { margin: 0 0 8px; color: var(--azul-escuro); font-size: 17px; line-height: 1.3; }
+  .cartao p:last-child, .cartao ul:last-child { margin-bottom: 0; }
+  .cartao ul { padding-left: 18px; }
+
+  .selo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 12px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .selo.laranja { color: var(--texto); }
+  .azul-escuro { background: var(--azul-escuro); }
+  .azul { background: var(--azul); }
+  .laranja { background: var(--laranja); }
+  .verde { background: var(--verde); }
+
+  .tabela-rolagem { overflow-x: auto; margin: 12px 0 18px; border: 1px solid var(--borda); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 1.45; }
+  th {
+    padding: 11px 14px;
+    background: var(--azul-escuro);
+    color: #fff;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+  }
+  td { padding: 10px 14px; border-top: 1px solid var(--borda); vertical-align: top; }
+  tbody tr:nth-child(even) { background: var(--zebra); }
+  td.pendente { color: var(--texto-suave); font-style: italic; }
+
+  .fluxo-rolagem { overflow-x: auto; }
+  .fluxo { display: block; width: 100%; min-width: 900px; height: auto; font-family: "Liberation Sans", Arial, Helvetica, sans-serif; }
+  .fluxo text { text-anchor: middle; font-size: 14px; font-weight: 700; }
+  .fluxo .branco { fill: #fff; }
+  .fluxo .escuro { fill: var(--azul-escuro); }
+  .fluxo .rotulo { fill: var(--texto-suave); font-size: 13px; font-weight: 700; }
+  .fluxo .inicio { text-anchor: start; }
+  .fluxo .fim { text-anchor: end; }
+  .fluxo .raia-titulo { text-anchor: start; fill: var(--azul-escuro); font-size: 14px; }
+  .fluxo .linha { fill: none; stroke: var(--azul-escuro); stroke-width: 2; }
+
+  .lista-verificar { margin: 0; padding: 0; list-style: none; }
+  .lista-verificar li {
+    position: relative;
+    margin-bottom: 10px;
+    padding: 12px 16px 12px 46px;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    background: var(--azul-claro);
+  }
+  .lista-verificar li::before {
+    content: "";
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--azul-escuro);
+    border-radius: 3px;
+    background: #fff;
+  }
+
+  footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 64px;
+    padding-top: 16px;
+    border-top: 1px solid var(--borda);
+    color: var(--texto-suave);
+    font-size: 13px;
+  }
+
+  @media (max-width: 900px) {
+    .grade-3, .grade-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 620px) {
+    .pagina { padding: 32px 16px 24px; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 26px; }
+    .introducao { font-size: 16px; }
+    .cartao-principal { padding: 14px; }
+    .grade-2, .grade-3, .grade-4 { grid-template-columns: minmax(0, 1fr); }
+    section { margin-top: 48px; }
+  }
+
+  @media print {
+    .sumario { display: none; }
+    section { margin-top: 32px; }
+    .cartao, .cartao-principal, tr { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main class="pagina">
+
+  <header>
+    <p class="sobrelinha">Trabalho do Grau B</p>
+    <h1>Modelo conceitual: Processamento de Imagens de Drones</h1>
+    <p class="introducao">Documento-base do Trabalho do Grau B, feito antes da implementação. Registra o sistema estudado, o modelo definido pelo grupo e o motivo de cada decisão.</p>
+    <div class="aviso">
+      <p><strong>Situação:</strong> a estrutura do modelo está definida. Os valores das distribuições são iniciais e ainda serão verificados (ver <a href="#pontos-a-verificar">Pontos a verificar</a>).</p>
+    </div>
+    <ul class="sumario" aria-label="Sumário">
+      <li><a href="#o-sistema">O sistema</a></li>
+      <li><a href="#modelo-conceitual">Modelo conceitual</a></li>
+      <li><a href="#requisitos">Requisitos</a></li>
+      <li><a href="#decisoes">Decisões</a></li>
+      <li><a href="#pontos-a-verificar">A verificar</a></li>
+      <li><a href="#proximos-passos">Próximos passos</a></li>
+    </ul>
+  </header>
+
+  <section id="o-sistema">
+    <p class="sobrelinha">Parte 1</p>
+    <h2>O sistema</h2>
+
+    <h3>O que estamos modelando</h3>
+    <p>Uma plataforma que recebe imagens capturadas por drones e as transforma em mapas topográficos de alta resolução. Em vez de instalar software e manter computadores potentes, o prestador de serviço envia as fotos de um voo e recebe o mapa pronto.</p>
+
+    <div class="cartao-principal">
+      <figure style="margin:0">
+        <img src="img/exemplo_mapa_plataforma.png" alt="Tela de uma plataforma de mapas exibindo um talhão de 0,48 ha sobre imagem de satélite, colorido por um índice de vegetação" width="1914" height="934">
+        <figcaption>Exemplo do tipo de plataforma estudada: um talhão de 0,48 ha mapeado com câmera multiespectral, exibido na camada NDVI. A tela também oferece RGB e outros índices (GNDVI, NDRE, LCI e OSAVI). A imagem é ilustrativa: o estudo modela apenas os produtos descritos abaixo.</figcaption>
+      </figure>
+    </div>
+
+    <h3>Um dia do prestador de serviço</h3>
+    <div class="grade grade-2">
+      <div class="cartao">
+        <div class="selo azul-escuro" aria-hidden="true">1</div>
+        <h4>Pela manhã</h4>
+        <p>A equipe do prestador sai para atender uma fazenda. O cliente quer um mapa atualizado de um <strong>talhão</strong>, uma área delimitada da lavoura, para acompanhar o terreno e a plantação.</p>
+      </div>
+      <div class="cartao">
+        <div class="selo azul" aria-hidden="true">2</div>
+        <h4>Em campo</h4>
+        <p>O operador define a área do voo e o drone percorre o talhão em faixas paralelas. Ele fotografa o terreno em intervalos regulares, de modo que cada foto se sobreponha às vizinhas. É essa sobreposição que depois permite montar uma imagem única e reconstruir o relevo. Ao final, os arquivos ficam no cartão do drone, e a equipe segue para o próximo voo ou para outra fazenda.</p>
+      </div>
+      <div class="cartao">
+        <div class="selo laranja" aria-hidden="true">3</div>
+        <h4>No fim do dia</h4>
+        <p>A equipe volta à empresa e envia à plataforma os arquivos de cada voo. Cada voo enviado dá origem a um <strong>mapa</strong>, que é o que a plataforma processa. O prestador não precisa acompanhar o processamento: ele fecha a plataforma e é notificado quando o mapa fica pronto.</p>
+      </div>
+      <div class="cartao">
+        <div class="selo verde" aria-hidden="true">4</div>
+        <h4>Às vezes falta algo</h4>
+        <p>Como fotos que ficaram para trás ao copiar o cartão. Nesse caso, a plataforma avisa o prestador, que envia o que faltou, e o mapa volta a ser conferido.</p>
+      </div>
+    </div>
+
+    <h3>O que a plataforma processa</h3>
+    <div class="grade grade-4">
+      <div class="cartao">
+        <div class="selo azul-escuro" aria-hidden="true">1</div>
+        <h4>Validação</h4>
+        <p>Confere se o prestador enviou todos os arquivos necessários. Essa etapa roda em CPU, antes de ocupar uma GPU.</p>
+      </div>
+      <div class="cartao">
+        <div class="selo azul" aria-hidden="true">2</div>
+        <h4>Alinhamento</h4>
+        <p>Identifica pontos em comum entre as fotos sobrepostas e calcula a posição de cada uma. O resultado serve de base para os dois produtos seguintes.</p>
+      </div>
+      <div class="cartao">
+        <div class="selo laranja" aria-hidden="true">3</div>
+        <h4>Geração dos produtos</h4>
+        <p>Feita em paralelo a partir do alinhamento:</p>
+        <ul>
+          <li><strong>Ortomosaico:</strong> as fotos costuradas e corrigidas, formando uma imagem única e sem distorção.</li>
+          <li><strong>Modelo de elevação:</strong> a altura de cada ponto do terreno, que dá o caráter topográfico ao mapa.</li>
+        </ul>
+      </div>
+      <div class="cartao">
+        <div class="selo verde" aria-hidden="true">4</div>
+        <h4>Entrega</h4>
+        <p>Quando os dois produtos terminam, o mapa fica pronto e o prestador é notificado.</p>
+      </div>
+    </div>
+
+    <h3>O problema de gestão</h3>
+    <p>Como as equipes voltam do campo em horários parecidos, os envios se concentram no fim do dia e disputam as mesmas GPUs. Formam-se filas justamente no período de maior demanda, e o prestador tem um prazo a cumprir com o cliente.</p>
+    <p>A plataforma promete o mapa em até <strong>5 minutos</strong>. A gestão precisa saber se a capacidade atual cumpre essa meta no pico ou se vale a pena acrescentar uma GPU.</p>
+  </section>
+
+  <section id="modelo-conceitual">
+    <p class="sobrelinha">Parte 2</p>
+    <h2>Modelo conceitual</h2>
+
+    <h3 style="margin-top:0">Fluxograma</h3>
+    <div class="cartao-principal">
+      <div class="fluxo-rolagem">
+        <svg class="fluxo" viewBox="0 0 1100 620" role="img" aria-labelledby="fluxo-titulo fluxo-desc">
+          <title id="fluxo-titulo">Fluxograma do modelo conceitual</title>
+          <desc id="fluxo-desc">O mapa entra no fim do upload, passa pela fila da CPU e pela validação. Se faltar arquivo, o prestador corrige e o mapa volta à fila da CPU. Se estiver completo, o número de imagens define a rota: GPU comum ou GPU de alta capacidade. Em cada rota há fila, alinhamento, ortomosaico e modelo de elevação em paralelo, e junção. As duas rotas terminam na notificação de mapa pronto.</desc>
+          <defs>
+            <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#0f3d7a"/>
+            </marker>
+          </defs>
+
+          <!-- Raias das rotas -->
+          <rect x="270" y="258" width="625" height="160" rx="8" fill="#f5f8fc" stroke="#d3e0f2" stroke-width="2"/>
+          <text class="raia-titulo" x="288" y="280">GPU comum (2) · fila única para todas as etapas</text>
+          <rect x="270" y="438" width="625" height="160" rx="8" fill="#f5f8fc" stroke="#d3e0f2" stroke-width="2"/>
+          <text class="raia-titulo" x="288" y="460">GPU de alta capacidade (2) · fila única para todas as etapas</text>
+
+          <!-- Conexões da linha superior -->
+          <path class="linha" marker-end="url(#seta)" d="M200 150 H230"/>
+          <path class="linha" marker-end="url(#seta)" d="M370 150 H410"/>
+          <path class="linha" marker-end="url(#seta)" d="M570 150 H610"/>
+          <path class="linha" marker-end="url(#seta)" d="M700 95 V48 H580"/>
+          <path class="linha" marker-end="url(#seta)" d="M400 48 H300 V118"/>
+          <path class="linha" marker-end="url(#seta)" d="M700 205 V240 H130 V379"/>
+          <text class="rotulo inicio" x="712" y="74">sim (probabilidade)</text>
+          <text class="rotulo inicio" x="712" y="228">não</text>
+
+          <!-- Rotas -->
+          <path class="linha" d="M230 439 H250"/>
+          <path class="linha" marker-end="url(#seta)" d="M250 439 V349 H290"/>
+          <path class="linha" marker-end="url(#seta)" d="M250 439 V529 H290"/>
+          <text class="rotulo fim" x="243" y="394">não</text>
+          <text class="rotulo fim" x="243" y="492">sim</text>
+
+          <!-- Conexões da raia comum -->
+          <path class="linha" marker-end="url(#seta)" d="M420 349 H450"/>
+          <path class="linha" d="M570 349 H590"/>
+          <path class="linha" marker-end="url(#seta)" d="M590 349 V315 H610"/>
+          <path class="linha" marker-end="url(#seta)" d="M590 349 V383 H610"/>
+          <path class="linha" d="M740 315 H760 V349"/>
+          <path class="linha" d="M740 383 H760 V349"/>
+          <path class="linha" marker-end="url(#seta)" d="M760 349 H780"/>
+          <path class="linha" d="M875 349 H915 V439"/>
+
+          <!-- Conexões da raia de alta capacidade -->
+          <path class="linha" marker-end="url(#seta)" d="M420 529 H450"/>
+          <path class="linha" d="M570 529 H590"/>
+          <path class="linha" marker-end="url(#seta)" d="M590 529 V495 H610"/>
+          <path class="linha" marker-end="url(#seta)" d="M590 529 V563 H610"/>
+          <path class="linha" d="M740 495 H760 V529"/>
+          <path class="linha" d="M740 563 H760 V529"/>
+          <path class="linha" marker-end="url(#seta)" d="M760 529 H780"/>
+          <path class="linha" d="M875 529 H915 V439"/>
+          <path class="linha" marker-end="url(#seta)" d="M915 439 H935"/>
+
+          <!-- Linha superior -->
+          <rect x="30" y="118" width="170" height="64" rx="6" fill="#2b6cc4"/>
+          <text class="branco" x="115" y="146">Fim do upload</text>
+          <text class="branco" x="115" y="166">entra o mapa</text>
+
+          <rect x="230" y="118" width="140" height="64" rx="6" fill="#e8f0fa" stroke="#0f3d7a" stroke-width="2"/>
+          <text class="escuro" x="300" y="155">Fila CPU</text>
+
+          <rect x="410" y="118" width="160" height="64" rx="6" fill="#0f3d7a"/>
+          <text class="branco" x="490" y="146">Validação</text>
+          <text class="branco" x="490" y="166">CPU</text>
+
+          <polygon points="700,95 790,150 700,205 610,150" fill="#fff3e3" stroke="#e8922e" stroke-width="2"/>
+          <text class="escuro" x="700" y="146">Faltou</text>
+          <text class="escuro" x="700" y="164">arquivo?</text>
+
+          <rect x="400" y="20" width="180" height="56" rx="6" fill="#e8922e"/>
+          <text x="490" y="44" fill="#1c2b44">Prestador corrige e</text>
+          <text x="490" y="63" fill="#1c2b44">envia os faltantes</text>
+
+          <polygon points="130,379 230,439 130,499 30,439" fill="#fff3e3" stroke="#e8922e" stroke-width="2"/>
+          <text class="escuro" x="130" y="435">num_imagens</text>
+          <text class="escuro" x="130" y="453">&gt; limite?</text>
+
+          <!-- Raia comum -->
+          <rect x="290" y="319" width="130" height="60" rx="6" fill="#e8f0fa" stroke="#0f3d7a" stroke-width="2"/>
+          <text class="escuro" x="355" y="344">Fila</text>
+          <text class="escuro" x="355" y="362">GPU comum</text>
+          <rect x="450" y="319" width="120" height="60" rx="6" fill="#0f3d7a"/>
+          <text class="branco" x="510" y="354">Alinhamento</text>
+          <rect x="610" y="292" width="130" height="46" rx="6" fill="#2b6cc4"/>
+          <text class="branco" x="675" y="320">Ortomosaico</text>
+          <rect x="610" y="360" width="130" height="46" rx="6" fill="#2b6cc4"/>
+          <text class="branco" x="675" y="379">Modelo de</text>
+          <text class="branco" x="675" y="397">elevação</text>
+          <rect x="780" y="319" width="95" height="60" rx="6" fill="#0f3d7a"/>
+          <text class="branco" x="827" y="354">Junção</text>
+
+          <!-- Raia de alta capacidade -->
+          <rect x="290" y="499" width="130" height="60" rx="6" fill="#e8f0fa" stroke="#0f3d7a" stroke-width="2"/>
+          <text class="escuro" x="355" y="524">Fila GPU</text>
+          <text class="escuro" x="355" y="542">alta capacidade</text>
+          <rect x="450" y="499" width="120" height="60" rx="6" fill="#0f3d7a"/>
+          <text class="branco" x="510" y="534">Alinhamento</text>
+          <rect x="610" y="472" width="130" height="46" rx="6" fill="#2b6cc4"/>
+          <text class="branco" x="675" y="500">Ortomosaico</text>
+          <rect x="610" y="540" width="130" height="46" rx="6" fill="#2b6cc4"/>
+          <text class="branco" x="675" y="559">Modelo de</text>
+          <text class="branco" x="675" y="577">elevação</text>
+          <rect x="780" y="499" width="95" height="60" rx="6" fill="#0f3d7a"/>
+          <text class="branco" x="827" y="534">Junção</text>
+
+          <!-- Saída -->
+          <rect x="935" y="399" width="145" height="80" rx="6" fill="#2e7d32"/>
+          <text class="branco" x="1007" y="434">Notificação</text>
+          <text class="branco" x="1007" y="454">mapa pronto</text>
+        </svg>
+      </div>
+    </div>
+    <p class="legenda"><strong>Legenda do fluxo:</strong> o mapa entra quando termina o primeiro upload e passa pela validação em CPU. Se faltar arquivo, volta à fila da CPU após a correção pelo prestador. Se estiver completo, segue a rota definida pelo número de imagens e usa somente as GPUs desse grupo até o fim. Cada grupo tem uma única fila, usada por todas as etapas de GPU: depois do alinhamento, ortomosaico e modelo de elevação voltam a essa fila e disputam as GPUs com os mapas que ainda vão alinhar. A junção espera os dois produtos, e o mapa segue para a notificação.</p>
+
+    <h3>Entidades e atributos</h3>
+    <p><strong>Entidade:</strong> mapa, que representa o processamento de um voo, do fim do primeiro upload até a notificação.</p>
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Atributo</th><th>Significado</th><th>Uso no modelo</th></tr></thead>
+        <tbody>
+          <tr><td><code>num_imagens</code></td><td>Quantidade de imagens do voo</td><td>Define a rota e os tempos de GPU</td></tr>
+          <tr><td><code>rota</code></td><td>Comum ou alta capacidade</td><td>Define o grupo de GPUs</td></tr>
+          <tr><td><code>tentativas</code></td><td>Número de passagens pela validação</td><td>Identifica mapas que precisaram de correção</td></tr>
+          <tr><td><code>instante_entrada</code></td><td>Fim do primeiro upload</td><td>Início do lead time; não muda em caso de reenvio</td></tr>
+          <tr><td><code>instante_saida</code></td><td>Notificação de mapa pronto</td><td>Fim do lead time</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Recursos</h3>
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Recurso</th><th>Capacidade (cenário atual)</th><th>Etapas</th></tr></thead>
+        <tbody>
+          <tr><td><code>CPU</code></td><td>1</td><td>Validação</td></tr>
+          <tr><td><code>GPU comum</code></td><td>2</td><td>Alinhamento e produtos dos mapas até o limite de imagens</td></tr>
+          <tr><td><code>GPU de alta capacidade</code></td><td>2</td><td>Alinhamento e produtos dos mapas acima do limite</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Cada etapa ocupa uma unidade do recurso e a libera ao terminar. Os dois produtos disputam as GPUs de forma independente, então só rodam ao mesmo tempo se houver duas livres.</p>
+    <p>O prestador não é um recurso: a correção é um atraso sem fila, porque cada um corrige o próprio envio.</p>
+
+    <h3>Filas</h3>
+    <p><code>Fila CPU</code>, <code>Fila GPU comum</code> e <code>Fila GPU de alta capacidade</code>, todas FIFO e sem limite de buffer. Nenhum mapa é descartado ou desiste.</p>
+    <p>Cada grupo de GPUs tem uma única fila, compartilhada por alinhamento, ortomosaico e modelo de elevação. Um mapa entra nela três vezes, uma por tarefa, e a GPU que fica livre pega a tarefa mais antiga, sem distinguir o tipo.</p>
+
+    <h3>Regras de fluxo</h3>
+    <div class="grade grade-2">
+      <div class="cartao">
+        <h4>Decisão por probabilidade</h4>
+        <p>Na validação, cada tentativa tem a mesma chance de detectar arquivos faltando. O mapa repete a validação até passar.</p>
+      </div>
+      <div class="cartao">
+        <h4>Reenvio</h4>
+        <p>O prestador envia só os arquivos faltantes, o que não altera <code>num_imagens</code>. O relógio do lead time continua correndo.</p>
+      </div>
+      <div class="cartao">
+        <h4>Decisão por condição</h4>
+        <p>Mapas com <code>num_imagens</code> acima do limite vão para a GPU de alta capacidade; os demais, para a GPU comum.</p>
+      </div>
+      <div class="cartao">
+        <h4>Fluxo paralelo</h4>
+        <p>Após o alinhamento, o mapa se duplica em ortomosaico e modelo de elevação. A junção espera os dois, e o mapa sai quando o último termina.</p>
+      </div>
+    </div>
+
+    <h3>Chegadas e horizonte</h3>
+    <p>Os envios se concentram no fim do dia, com pico entre 17h e 21h. Cada replicação simula uma noite de pico, com relógio em minutos, e termina quando o último mapa fica pronto. Por isso, é uma simulação terminante.</p>
+
+    <h3>Distribuições de entrada</h3>
+    <div class="aviso">
+      <p><strong>Todos os valores são iniciais e estão a verificar.</strong> Ainda não têm fonte, e a coluna de justificativa será preenchida na verificação, como exige o enunciado.</p>
+    </div>
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Grandeza</th><th>Distribuição</th><th>Parâmetros</th><th>Unidade</th><th>Justificativa</th></tr></thead>
+        <tbody>
+          <tr><td>Mapas por noite</td><td>Poisson</td><td>média 250</td><td>mapas/noite</td><td class="pendente">A preencher</td></tr>
+          <tr><td>Horário de envio</td><td>Triangular</td><td>mín 17h, moda 18h30, máx 21h</td><td>hora</td><td class="pendente">Retorno concentrado das equipes; valores a preencher</td></tr>
+          <tr><td><code>num_imagens</code></td><td>Triangular</td><td>mín 20, moda 80, máx 200</td><td>imagens</td><td class="pendente">Mapas pequenos (poucas imagens); valores a preencher</td></tr>
+          <tr><td>Limite da rota</td><td>Constante</td><td>80</td><td>imagens</td><td class="pendente">A preencher</td></tr>
+          <tr><td>Tempo de validação</td><td>Uniform</td><td>mín 5, máx 15</td><td>s</td><td class="pendente">A preencher</td></tr>
+          <tr><td>Falta de arquivos</td><td>Bernoulli</td><td>5% por tentativa</td><td>probabilidade</td><td class="pendente">A preencher</td></tr>
+          <tr><td>Tempo de correção</td><td>Uniform</td><td>mín 1, máx 3</td><td>min</td><td class="pendente">A preencher</td></tr>
+          <tr><td>Alinhamento, GPU comum</td><td>Uniform</td><td>mín 0,3, máx 0,5</td><td>s/imagem</td><td class="pendente">A preencher</td></tr>
+          <tr><td>Ortomosaico, GPU comum</td><td>Uniform</td><td>mín 0,4, máx 0,6</td><td>s/imagem</td><td class="pendente">A preencher</td></tr>
+          <tr><td>Modelo de elevação, GPU comum</td><td>Uniform</td><td>mín 0,3, máx 0,5</td><td>s/imagem</td><td class="pendente">A preencher</td></tr>
+          <tr><td>GPU de alta capacidade</td><td>Fator sobre a GPU comum</td><td>0,5 × o tempo</td><td>adimensional</td><td class="pendente">A preencher</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Em cada etapa de GPU, o tempo é <code>num_imagens</code> × tempo por imagem sorteado × fator da GPU (1 na comum).</p>
+
+    <h3>Indicadores</h3>
+    <div class="grade grade-2">
+      <div class="cartao">
+        <div class="selo azul-escuro" aria-hidden="true">1</div>
+        <h4>P90 do lead time (indicador principal)</h4>
+        <p>Em minutos, medido do fim do primeiro upload até a notificação de mapa pronto, incluída a correção pelo prestador, com meta de até 5 min. É calculado por noite simulada, e o IC de 95% é obtido entre as replicações.</p>
+      </div>
+      <div class="cartao">
+        <div class="selo azul" aria-hidden="true">2</div>
+        <h4>Mapas fora do prazo</h4>
+        <p>Em mapas por noite, medidos do fim do primeiro upload até a notificação de mapa pronto, contando aqueles com lead time acima de 5 min, com meta de até 10% dos mapas da noite. <em>O percentual é uma proposta a confirmar.</em></p>
+      </div>
+    </div>
+    <p><strong>Complementares:</strong> lead time médio (min), vazão (mapas/h) e utilização de cada grupo de GPUs (%).</p>
+
+    <h3>Cenários</h3>
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Cenário</th><th>GPUs comuns</th><th>GPUs de alta capacidade</th><th>Demanda</th><th>Replicações</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Atual</strong></td><td>2</td><td>2</td><td>Pico</td><td>≥ 30</td></tr>
+          <tr><td><strong>GPU extra</strong></td><td>2</td><td>3</td><td>Pico</td><td>≥ 30</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>A comparação usa o IC de 95% do P90 do lead time. Intervalos que não se sobrepõem indicam diferença conclusiva; intervalos sobrepostos não permitem concluir pela diferença.</p>
+
+    <h3>Questões do estudo</h3>
+    <div class="grade grade-3">
+      <div class="cartao">
+        <div class="selo azul-escuro" aria-hidden="true">1</div>
+        <p>Na situação atual, o <strong>P90 do lead time</strong> atende à meta de 5 min no pico?</p>
+      </div>
+      <div class="cartao">
+        <div class="selo azul" aria-hidden="true">2</div>
+        <p>Uma GPU de alta capacidade a mais <strong>reduz o P90 do lead time</strong> com IC sem sobreposição? Em quantos minutos?</p>
+      </div>
+      <div class="cartao">
+        <div class="selo laranja" aria-hidden="true">3</div>
+        <p>Quantos mapas por noite <strong>deixam de ficar fora do prazo</strong> com a GPU extra?</p>
+      </div>
+    </div>
+
+    <h3>Classificação do sistema</h3>
+    <div class="grade grade-3">
+      <div class="cartao">
+        <h4>Dinâmico</h4>
+        <p>O estado muda ao longo da noite, com filas que crescem no pico e depois se esvaziam.</p>
+      </div>
+      <div class="cartao">
+        <h4>Estocástico</h4>
+        <p>Chegadas, quantidades de imagens por mapa, tempos de serviço e falta de arquivos são aleatórios.</p>
+      </div>
+      <div class="cartao">
+        <h4>Discreto</h4>
+        <p>O estado muda em instantes definidos, como chegadas e conclusões de etapas.</p>
+      </div>
+    </div>
+
+    <h3>Hipóteses e simplificações</h3>
+    <ul>
+      <li><strong>Mapas pequenos (poucas imagens):</strong> fotogrametria completa de voos grandes costuma levar bem mais de 5 min, portanto o estudo vale para voos pequenos. Essa afirmação ainda precisa de fonte.</li>
+      <li><strong>Tempos proporcionais:</strong> os tempos de GPU crescem na proporção do número de imagens.</li>
+      <li><strong>Upload fora do modelo:</strong> o relógio começa no fim do primeiro upload. O envio dos faltantes faz parte do tempo de correção.</li>
+      <li><strong>Prestador sempre corrige:</strong> não há desistência, e a correção não depende de quantos arquivos faltaram.</li>
+      <li><strong>Sem falhas técnicas:</strong> as GPUs não param, e o alinhamento e a geração dos produtos sempre dão certo.</li>
+      <li><strong>Mapas de índices fora do escopo:</strong> a plataforma do exemplo também exibe índices como o NDVI, mas o estudo modela apenas ortomosaico e modelo de elevação.</li>
+      <li><strong>Apenas a noite de pico:</strong> os resultados não se aplicam a períodos de demanda normal.</li>
+    </ul>
+  </section>
+
+  <section id="requisitos">
+    <p class="sobrelinha">Enunciado, seção 3</p>
+    <h2>Atendimento aos requisitos</h2>
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Item</th><th>Requisito</th><th>Solução no modelo</th></tr></thead>
+        <tbody>
+          <tr><td>a</td><td>Base do estudo</td><td>Este documento; justificativas das distribuições pendentes</td></tr>
+          <tr><td>b</td><td>Decisões</td><td>Probabilidade: falta de arquivos. Condição: rota por <code>num_imagens</code></td></tr>
+          <tr><td>c</td><td>Indicadores</td><td>Mapas fora do prazo (contagem) e P90 do lead time</td></tr>
+          <tr><td>d</td><td>Atributo com significado</td><td><code>num_imagens</code>, usado na rota e nos tempos</td></tr>
+          <tr><td>e</td><td>Lotes ou duplicações</td><td>Ortomosaico e modelo de elevação em paralelo, com junção</td></tr>
+          <tr><td>f</td><td>Demonstração visual</td><td>Monitor amostra filas, GPUs ocupadas e mapas concluídos. A cena traz título do cenário, relógio, ao menos três indicadores com unidade e um gráfico com eixos rotulados</td></tr>
+          <tr><td>g</td><td>Gráficos de resultados</td><td>Mapas na fila da GPU de alta capacidade ao longo da noite, em degraus; P90 do lead time por cenário, com IC em barras de erro</td></tr>
+          <tr><td>h</td><td>Experimentação</td><td>Dois cenários, 30 ou mais replicações e IC de 95% do P90</td></tr>
+          <tr><td>i</td><td>Análise</td><td>A fazer após os resultados, sempre com número, unidade e comparação</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="decisoes">
+    <p class="sobrelinha">Por que assim</p>
+    <h2>Registro de decisões</h2>
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Decisão</th><th>Por quê</th><th>Alternativas descartadas</th></tr></thead>
+        <tbody>
+          <tr><td>Python + SimPy</td><td>Ferramenta aceita pela disciplina e já usada no Grau A</td><td>JaamSim, Arena</td></tr>
+          <tr><td>Usuário: prestador de serviço</td><td>Envia vários voos e tem prazos a cumprir com clientes, o que dá sentido à meta</td><td>Produtor rural; os dois perfis</td></tr>
+          <tr><td>Upload ao fim do voo, chegando à plataforma no fim do dia</td><td>A equipe termina o campo, volta à empresa e sobe os arquivos, o que concentra a demanda</td><td>Envio imagem a imagem; upload no campo com falhas</td></tr>
+          <tr><td>Prestador sai e é notificado</td><td>Corresponde ao uso esperado e mantém o lead time como foco</td><td>Cancelar na fila; reenviar por demora</td></tr>
+          <tr><td>Falha na validação, por falta de arquivos</td><td>É um erro do prestador, detectado antes de ocupar GPU</td><td>Falha no alinhamento; falha maior em mapas grandes; limite de reenvios</td></tr>
+          <tr><td>Reenvio só dos faltantes, repetindo até dar certo</td><td>Todo mapa termina, e o lead time fica definido para todos</td><td>Reenviar o voo inteiro</td></tr>
+          <tr><td>Lead time desde o primeiro envio</td><td>Mostra a espera real e segue a definição do enunciado</td><td>Contar cada envio separadamente</td></tr>
+          <tr><td>Rota por <code>num_imagens</code></td><td>É uma decisão condicional natural e dá uso direto ao atributo</td><td>Rejeição por qualidade; prioridade por prazo</td></tr>
+          <tr><td>Ortomosaico + modelo de elevação em paralelo</td><td>Tarefas paralelas a partir do alinhamento, sem exigir câmera multiespectral</td><td>Mapa de índices; blocos de imagens; voos em lote</td></tr>
+          <tr><td>2 GPUs por grupo</td><td>Os dois produtos podem rodar ao mesmo tempo em cada rota</td><td>Grupo único; grupo separado para os produtos</td></tr>
+          <tr><td>Fila única FIFO por grupo de GPUs</td><td>É a regra mais simples de implementar e explicar. Em troca, mapas já alinhados podem esperar atrás de novos mapas</td><td>Prioridade para os produtos; GPUs separadas por etapa</td></tr>
+          <tr><td>Comparar atual e GPU extra no pico</td><td>Responde diretamente à decisão de investimento</td><td>Fatorial 2×2; normal × pico; prioridade × FIFO</td></tr>
+          <tr><td>Meta de 5 min</td><td>Definida pelo grupo; a escala de tempo curta é parte do estudo</td><td>Metas de 12 h ou 24 h</td></tr>
+          <tr><td>Mapas pequenos (poucas imagens)</td><td>Tornam a meta de 5 min coerente com o tempo de processamento</td><td>Modo rápido hipotético; revisar a meta após pesquisa</td></tr>
+          <tr><td>Chegadas Triangular(17h, 18h30, 21h)</td><td>Representam o retorno concentrado das equipes e fazem a fila crescer</td><td>Poisson em janela fixa; pulsos por empresa</td></tr>
+          <tr><td>Contagem: mapas fora do prazo</td><td>Reage à GPU extra e ajuda a comparar os cenários</td><td>Mapas reenviados; mapas concluídos</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="pontos-a-verificar">
+    <p class="sobrelinha">Pendências</p>
+    <h2>Pontos a verificar</h2>
+    <ul class="lista-verificar">
+      <li><strong>Valores das distribuições:</strong> verificar e justificar cada um.</li>
+      <li><strong>Meta de mapas fora do prazo:</strong> confirmar o limite de 10% e definir o valor absoluto.</li>
+      <li><strong>Gargalo:</strong> confirmar que está nas GPUs de alta capacidade. Pela conta manual no instante de maior demanda (cerca de 125 mapas/h), elas ficariam perto de 90% de ocupação, e as comuns perto de 45%. Se o gargalo estiver nas comuns, a GPU extra pode não alterar o P90.</li>
+      <li><strong>Sensibilidade da comparação:</strong> confirmar que o cenário atual fica perto da meta. Se o sistema folgar nos dois cenários, a comparação não mostrará diferença.</li>
+      <li><strong>Peso dos reenvios:</strong> os 5% de falha ficam perto dos 10% tolerados pelo P90. Confirmar que os mapas com correção não determinam o P90 sozinhos.</li>
+      <li><strong>Hipótese de mapas pequenos:</strong> buscar fonte para os tempos de fotogrametria.</li>
+    </ul>
+  </section>
+
+  <section id="proximos-passos">
+    <p class="sobrelinha">Continuação</p>
+    <h2>Próximos passos</h2>
+    <ol>
+      <li>Verificar os valores das distribuições.</li>
+      <li>Implementar o modelo em caderno Python com SimPy, usando como referência <code>../grau-a/api_simulator.py</code> e <code>../grau-a/executar_replicacoes.py</code>, sem depender desses arquivos.</li>
+      <li>Rodar os cenários e calcular os indicadores e os IC.</li>
+      <li>Gerar os gráficos e a animação em MP4 com <code>FuncAnimation</code>.</li>
+      <li>Escrever o relatório, com a declaração de uso de IA, e preparar os slides.</li>
+      <li>Obter no Moodle o template do relatório e confirmar a data de entrega.</li>
+    </ol>
+  </section>
+
+  <footer>
+    <span>Simulação e Modelagem de Sistemas · Unisinos</span>
+    <span>Trabalho do Grau B</span>
+  </footer>
+
+</main>
+</body>
+</html>
