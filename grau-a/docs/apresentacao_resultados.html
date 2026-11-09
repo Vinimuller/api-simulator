@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Resultados da simulação — API de compressão de imagens</title>
+<style>
+  :root {
+    --azul: #2f6fed;
+    --azul-claro-bg: #eaf1fd;
+    --azul-claro-borda: #2f6fed;
+    --navy: #16305a;
+    --verde: #1e7d3c;
+    --laranja: #e08a2b;
+    --vermelho: #c0392b;
+    --texto: #1c2430;
+    --texto-suave: #5b6472;
+    --borda: #e3e7ee;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #ffffff;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--texto);
+    overflow: hidden;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+  .slide {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    padding: 48px 72px 16px;
+  }
+  .slide.active {
+    display: flex;
+  }
+  .eyebrow {
+    color: var(--laranja);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    margin: 0 0 12px;
+  }
+  h1 {
+    color: var(--navy);
+    font-size: 40px;
+    line-height: 1.15;
+    margin: 0 0 8px;
+  }
+  .subtitulo-slide {
+    font-size: 16px;
+    color: var(--texto-suave);
+    margin: 0 0 28px;
+  }
+  .painel {
+    border: 1px solid var(--borda);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+    padding: 32px 36px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .subtitulo {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--navy);
+  }
+
+  /* Slide 1 */
+  .slide1-corpo {
+    display: flex;
+    gap: 32px;
+    flex: 1;
+    min-height: 0;
+    align-items: center;
+  }
+  .slide1-grafico {
+    flex: 1.4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+  .slide1-grafico img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .card-destaque {
+    flex: 1;
+    background: var(--azul-claro-bg);
+    border: 2px solid var(--azul-claro-borda);
+    border-radius: 16px;
+    padding: 32px 28px;
+    text-align: center;
+  }
+  .card-destaque .valor-principal {
+    font-size: 56px;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1.1;
+    margin: 8px 0;
+  }
+  .card-destaque .rotulo {
+    font-size: 14px;
+    color: var(--texto-suave);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .card-destaque .ic {
+    margin-top: 20px;
+    font-size: 15px;
+    color: var(--texto);
+  }
+  .card-destaque .ic b { color: var(--navy); }
+
+  /* Slide 2 */
+  .grid-metricas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 24px;
+    flex: 1;
+    min-height: 0;
+  }
+  .metrica-card {
+    border-radius: 14px;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #ffffff;
+  }
+  .metrica-card.validador { background: var(--laranja); }
+  .metrica-card.processador { background: var(--navy); }
+  .metrica-card.fila-validador { background: var(--azul-claro-bg); color: var(--navy); border: 2px solid var(--azul-claro-borda); }
+  .metrica-card.fila-processador { background: var(--azul-claro-bg); color: var(--navy); border: 2px solid var(--azul-claro-borda); }
+  .metrica-card .valor {
+    font-size: 44px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .metrica-card .rotulo {
+    margin-top: 8px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* Slide 3 */
+  .lista-perguntas {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    flex: 1;
+    justify-content: center;
+    overflow-y: auto;
+  }
+  .pergunta-item {
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .badge {
+    flex: 0 0 auto;
+    min-width: 56px;
+    text-align: center;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #ffffff;
+  }
+  .badge.sim { background: var(--verde); }
+  .badge.nao { background: var(--vermelho); }
+  .pergunta-texto { font-size: 16px; line-height: 1.4; }
+  .pergunta-justificativa { font-size: 14.5px; color: var(--texto-suave); margin-top: 6px; }
+  .pergunta-justificativa b { color: var(--texto); }
+
+  /* Navegação */
+  .navegacao {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 16px 0 4px;
+    font-size: 13px;
+    color: var(--texto-suave);
+  }
+  .navegacao button {
+    border: 1px solid var(--borda);
+    background: #ffffff;
+    color: var(--navy);
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 8px;
+    padding: 8px 18px;
+    cursor: pointer;
+  }
+  .navegacao button:hover { background: var(--azul-claro-bg); }
+  .navegacao button:disabled { opacity: 0.35; cursor: default; }
+  footer {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--texto-suave);
+    padding-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+
+  <section class="slide active" data-slide="1">
+    <p class="eyebrow">RESULTADOS DA SIMULAÇÃO</p>
+    <h1>Tempo de resposta da requisição</h1>
+    <p class="subtitulo-slide">1000 requisições simuladas — 10 repetições independentes</p>
+    <div class="painel">
+      <div class="slide1-corpo">
+        <div class="slide1-grafico">
+          <img src="../resposta_media_replicacoes.png" alt="Tempo médio de resposta por repetição, com linha tracejada na média">
+        </div>
+        <div class="card-destaque">
+          <p class="rotulo">Tempo médio de resposta</p>
+          <p class="valor-principal">1,75s</p>
+          <p class="ic">Intervalo de confiança de 95%:<br><b>[1,65s; 1,86s]</b></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="2">
+    <p class="eyebrow">MÉTRICAS DE RECURSO</p>
+    <h1>Utilização e filas</h1>
+    <p class="subtitulo-slide">Médias das 10 repetições</p>
+    <div class="painel">
+      <div class="grid-metricas">
+        <div class="metrica-card validador">
+          <p class="valor">2,8%</p>
+          <p class="rotulo">Utilização do Validador</p>
+        </div>
+        <div class="metrica-card processador">
+          <p class="valor">67%</p>
+          <p class="rotulo">Utilização do Processador</p>
+        </div>
+        <div class="metrica-card fila-validador">
+          <p class="valor">0,35</p>
+          <p class="rotulo">Tamanho médio da fila do Validador</p>
+        </div>
+        <div class="metrica-card fila-processador">
+          <p class="valor">1,52</p>
+          <p class="rotulo">Tamanho médio da fila do Processamento</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="3">
+    <p class="eyebrow">PERGUNTAS DE ESTUDO</p>
+    <h1>Respostas às perguntas</h1>
+    <p class="subtitulo-slide">&nbsp;</p>
+    <div class="painel">
+      <div class="lista-perguntas">
+        <div class="pergunta-item">
+          <span class="badge sim">SIM</span>
+          <div>
+            <p class="pergunta-texto">1. Com a taxa de chegada atual (0,8 req/s) e um único processador, o tempo médio de resposta fica abaixo de 2 segundos?</p>
+            <p class="pergunta-justificativa">Tempo médio de resposta é de <b>1,75s</b>.</p>
+          </div>
+        </div>
+        <div class="pergunta-item">
+          <span class="badge nao">NÃO</span>
+          <div>
+            <p class="pergunta-texto">2. Com um único processador, a utilização do servidor ultrapassa 90% sob a taxa de chegada atual?</p>
+            <p class="pergunta-justificativa">Utilização do servidor é de <b>67%</b>.</p>
+          </div>
+        </div>
+        <div class="pergunta-item">
+          <span class="badge nao">NÃO</span>
+          <div>
+            <p class="pergunta-texto">3. Com a decisão de rota atual (limiar de 3 MB), o processamento das imagens corresponde a pelo menos 80% das requisições?</p>
+            <p class="pergunta-justificativa"><b>78%</b> dos requests foram processados.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="navegacao">
+    <button id="btn-anterior">← Anterior</button>
+    <span id="indicador">1 / 3</span>
+    <button id="btn-proximo">Próximo →</button>
+  </div>
+  <footer>api-simulator · Simulação e Modelagem de Sistemas</footer>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const indicador = document.getElementById("indicador");
+    const btnAnterior = document.getElementById("btn-anterior");
+    const btnProximo = document.getElementById("btn-proximo");
+    let atual = 0;
+
+    function mostrarSlide(indice) {
+      slides[atual].classList.remove("active");
+      atual = Math.max(0, Math.min(indice, slides.length - 1));
+      slides[atual].classList.add("active");
+      indicador.textContent = `${atual + 1} / ${slides.length}`;
+      btnAnterior.disabled = atual === 0;
+      btnProximo.disabled = atual === slides.length - 1;
+    }
+
+    btnAnterior.addEventListener("click", () => mostrarSlide(atual - 1));
+    btnProximo.addEventListener("click", () => mostrarSlide(atual + 1));
+    document.addEventListener("keydown", (evento) => {
+      if (evento.key === "ArrowRight") mostrarSlide(atual + 1);
+      if (evento.key === "ArrowLeft") mostrarSlide(atual - 1);
+    });
+
+    mostrarSlide(0);
+  </script>
+
+</body>
+</html>

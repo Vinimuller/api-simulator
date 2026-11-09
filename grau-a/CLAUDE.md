@@ -24,13 +24,15 @@ All tunable parameters live as named constants at the top of `api_simulator.py` 
 
 ## Running
 
+Run from inside `grau-a/`; the `.venv` lives at the repository root.
+
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/pip install matplotlib numpy  # only needed for plot_distributions.py
-.venv/bin/python api_simulator.py
-.venv/bin/python plot_distributions.py
-.venv/bin/python executar_replicacoes.py
+python3 -m venv ../.venv
+../.venv/bin/pip install -r requirements.txt
+../.venv/bin/pip install matplotlib numpy  # only needed for plot_distributions.py
+../.venv/bin/python api_simulator.py
+../.venv/bin/python plot_distributions.py
+../.venv/bin/python executar_replicacoes.py
 ```
 
 ## Conventions

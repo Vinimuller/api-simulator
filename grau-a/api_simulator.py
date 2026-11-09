@@ -42,7 +42,7 @@ class Estatisticas:
     tempos_espera_validacao: list = field(default_factory=list)
     tempos_validacao: list = field(default_factory=list)
     tempos_espera_processamento: list = field(default_factory=list)
-    tempos_processamento: list = field(default_factory=list)  # só rota completa
+    tempos_processamento: list = field(default_factory=list)
     tempos_resposta: list = field(default_factory=list)
     contagem_rota_rapida: int = 0
     contagem_rota_completa: int = 0
@@ -144,9 +144,6 @@ def calcular_metricas(ambiente, estatisticas):
     percentual_rota_rapida = estatisticas.contagem_rota_rapida / n_completadas if n_completadas else 0.0
     percentual_rota_completa = estatisticas.contagem_rota_completa / n_completadas if n_completadas else 0.0
 
-    # Verificação da Lei de Little: L ~= lambda_efetivo * W
-    lei_little_L = vazao * resposta_media
-
     return {
         "n_completadas": n_completadas,
         "tempo_total": tempo_total,
@@ -163,7 +160,6 @@ def calcular_metricas(ambiente, estatisticas):
         "tamanho_medio_fila_processamento": tamanho_medio_fila_processamento,
         "resposta_media": resposta_media,
         "resposta_maxima": max(estatisticas.tempos_resposta, default=0.0),
-        "lei_little_L": lei_little_L,
     }
 
 
@@ -193,28 +189,6 @@ def imprimir_relatorio(ambiente, estatisticas):
     print(f"Tempo médio de resposta:    {m['resposta_media']:.4f} s")
     print(f"Tempo máximo de resposta:   {m['resposta_maxima']:.4f} s")
     print("-" * 50)
-    print(f"Verificação Lei de Little: L ~= {m['lei_little_L']:.4f} "
-          f"(vazão x tempo médio de resposta)")
-    print("=" * 50)
-
-
-def imprimir_tabela_amostra(estatisticas, n=10):
-    linhas = sorted(estatisticas.registros, key=lambda r: r["id_usuario"])[:n]
-
-    def fmt(valor):
-        return f"{valor:.4f}" if valor is not None else "-"
-
-    print(f"Primeiras {len(linhas)} requisições")
-    print("-" * 100)
-    print(f"{'id_usuario':>10} | {'tamanho_imagem':>14} | {'rota':>8} | "
-          f"{'espera_valid':>12} | {'tempo_valid':>11} | "
-          f"{'espera_proc':>11} | {'tempo_proc':>10}")
-    print("-" * 100)
-    for r in linhas:
-        print(f"{r['id_usuario']:>10} | {r['tamanho_imagem']:>14.4f} | {r['rota']:>8} | "
-              f"{fmt(r['tempo_espera_validacao']):>12} | {fmt(r['tempo_validacao']):>11} | "
-              f"{fmt(r['tempo_espera_processamento']):>11} | {fmt(r['tempo_processamento']):>10}")
-    print("-" * 100)
 
 
 def executar_simulacao(semente):
@@ -236,7 +210,6 @@ def principal():
 
     imprimir_relatorio(ambiente, estatisticas)
     print()
-    # imprimir_tabela_amostra(estatisticas)
 
 
 if __name__ == "__main__":

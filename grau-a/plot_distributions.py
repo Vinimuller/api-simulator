@@ -2,9 +2,7 @@
 Visualiza as três distribuições de probabilidade que orientam a simulação:
 1) Intervalo entre chegadas de requisições -> Exponencial(taxa=TAXA_CHEGADA)
 2) Tempo de validação por requisição -> Uniforme(TEMPO_VALIDACAO_MIN, TEMPO_VALIDACAO_MAX)
-3) Tempo de processamento por requisição (rota completa) ->
-   TEMPO_BASE + Uniforme(TAMANHO_MIN, TAMANHO_MAX) * TEMPO_POR_UNIDADE
-   (uma transformação linear de uma variável uniforme, portanto também é uniforme)
+3) Tamanho da imagem por requisição -> Uniforme(TAMANHO_MIN, TAMANHO_MAX)
 
 Gera N_USUARIOS amostras de cada uma (mesmo tamanho de amostra da simulação
 real) e sobrepõe a FDP teórica ao histograma empírico.
@@ -21,8 +19,6 @@ from api_simulator import (
     TAMANHO_MAX,
     TAMANHO_MIN,
     TAXA_CHEGADA,
-    TEMPO_BASE,
-    TEMPO_POR_UNIDADE,
     TEMPO_VALIDACAO_MAX,
     TEMPO_VALIDACAO_MIN,
 )
@@ -38,10 +34,6 @@ amostras_intervalo_chegada = [random.expovariate(TAXA_CHEGADA) for _ in range(N_
 amostras_tempo_validacao = [random.uniform(TEMPO_VALIDACAO_MIN, TEMPO_VALIDACAO_MAX) for _ in range(N_USUARIOS)]
 
 tamanhos_imagem = [random.uniform(TAMANHO_MIN, TAMANHO_MAX) for _ in range(N_USUARIOS)]
-amostras_tempo_processamento = [TEMPO_BASE + tamanho * TEMPO_POR_UNIDADE for tamanho in tamanhos_imagem]
-
-proc_min = TEMPO_BASE + TAMANHO_MIN * TEMPO_POR_UNIDADE
-proc_max = TEMPO_BASE + TAMANHO_MAX * TEMPO_POR_UNIDADE
 
 fig, eixos = plt.subplots(1, 3, figsize=(17, 5))
 
@@ -72,17 +64,17 @@ eixo.set_xlabel("Tempo de validação (s)")
 eixo.set_ylabel("Densidade")
 eixo.legend()
 
-# --- Tempo de processamento: TEMPO_BASE + Uniforme(TAMANHO_MIN, TAMANHO_MAX) * TEMPO_POR_UNIDADE ---
+# --- Tamanho da imagem: Uniforme(TAMANHO_MIN, TAMANHO_MAX) ---
 eixo = eixos[2]
-eixo.hist(amostras_tempo_processamento, bins=40, density=True, alpha=0.6,
-          color="seagreen", edgecolor="white", label="Tempos de processamento amostrados")
-altura = 1.0 / (proc_max - proc_min)
-eixo.plot([proc_min, proc_min, proc_max, proc_max],
-          [0, altura, altura, 0],
+eixo.hist(tamanhos_imagem, bins=40, density=True, alpha=0.6,
+          color="orange", edgecolor="white", label="Tamanhos de imagem amostrados")
+altura_tamanho = 1.0 / (TAMANHO_MAX - TAMANHO_MIN)
+eixo.plot([TAMANHO_MIN, TAMANHO_MIN, TAMANHO_MAX, TAMANHO_MAX],
+          [0, altura_tamanho, altura_tamanho, 0],
           color="darkred", linewidth=2,
-          label=f"FDP Uniforme [{proc_min:.2f}, {proc_max:.2f}] s")
-eixo.set_title("Tempo de processamento\ntempo = TEMPO_BASE + Uniforme(tamanho) × TEMPO_POR_UNIDADE")
-eixo.set_xlabel("Tempo de processamento (s)")
+          label=f"FDP Uniforme [{TAMANHO_MIN:.1f}, {TAMANHO_MAX:.1f}] MB")
+eixo.set_title("Tamanho da imagem\ntamanho ~ Uniforme(TAMANHO_MIN, TAMANHO_MAX)")
+eixo.set_xlabel("Tamanho da imagem (MB)")
 eixo.set_ylabel("Densidade")
 eixo.legend()
 
