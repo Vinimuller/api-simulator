@@ -177,6 +177,23 @@
   .fluxo .raia-titulo { text-anchor: start; fill: var(--azul-escuro); font-size: 14px; }
   .fluxo .linha { fill: none; stroke: var(--azul-escuro); stroke-width: 2; }
 
+  .destaque-numero {
+    margin: 20px 0;
+    padding: 18px 22px;
+    border-left: 5px solid var(--laranja);
+    border-radius: 0 8px 8px 0;
+    background: var(--laranja-claro);
+    font-size: 18px;
+  }
+  .destaque-numero strong { color: var(--azul-escuro); font-size: 26px; }
+  .destaque-numero sup a, sup a { text-decoration: none; font-weight: 700; }
+
+  .cartao figure { margin: -20px -20px 16px; }
+  .cartao figure img { border-radius: 10px 10px 0 0; aspect-ratio: 16 / 10; object-fit: cover; }
+
+  .referencias { padding-left: 22px; }
+  .referencias li { overflow-wrap: anywhere; }
+
   .lista-verificar { margin: 0; padding: 0; list-style: none; }
   .lista-verificar li {
     position: relative;
@@ -237,64 +254,127 @@
   <header>
     <p class="sobrelinha">Trabalho do Grau B</p>
     <h1>Modelo conceitual: Processamento de Imagens de Drones</h1>
-    <p class="introducao">Documento-base do Trabalho do Grau B, feito antes da implementação. Registra o sistema estudado, o modelo definido pelo grupo e o motivo de cada decisão.</p>
+    <p class="introducao">Documento-base do Trabalho do Grau B. Registra o sistema estudado, o modelo implementado pelo grupo, o motivo de cada decisão e os resultados da simulação. A ordem das seções acompanha a apresentação: primeiro o contexto, depois a plataforma, os detalhes do modelo, o experimento e os resultados.</p>
     <div class="aviso">
-      <p><strong>Situação:</strong> a estrutura do modelo está definida. Os valores das distribuições são iniciais e ainda serão verificados (ver <a href="#pontos-a-verificar">Pontos a verificar</a>).</p>
+      <p><strong>Situação:</strong> o modelo está implementado em Python e SimPy na pasta <code>../simulacao/</code>, e os dois cenários já foram simulados (<a href="#resultados">seção 5</a>). Falta a animação em MP4 (ver <a href="#pontos-a-verificar">Pontos a verificar</a>).</p>
     </div>
     <ul class="sumario" aria-label="Sumário">
-      <li><a href="#o-sistema">O sistema</a></li>
-      <li><a href="#modelo-conceitual">Modelo conceitual</a></li>
-      <li><a href="#requisitos">Requisitos</a></li>
+      <li><a href="#introducao">1. Introdução</a></li>
+      <li><a href="#plataforma">2. Plataforma</a></li>
+      <li><a href="#modelagem">3. Modelagem</a></li>
+      <li><a href="#experimento">4. Experimento</a></li>
+      <li><a href="#resultados">5. Resultados</a></li>
+      <li><a href="#requisitos">6. Requisitos</a></li>
       <li><a href="#decisoes">Decisões</a></li>
       <li><a href="#pontos-a-verificar">A verificar</a></li>
       <li><a href="#proximos-passos">Próximos passos</a></li>
+      <li><a href="#referencias">Referências</a></li>
     </ul>
   </header>
 
-  <section id="o-sistema">
-    <p class="sobrelinha">Parte 1</p>
-    <h2>O sistema</h2>
+  <section id="introducao">
+    <p class="sobrelinha">Seção 1</p>
+    <h2>Introdução</h2>
 
-    <h3>O que estamos modelando</h3>
-    <p>Uma plataforma que recebe imagens capturadas por drones e as transforma em mapas topográficos de alta resolução. Em vez de instalar software e manter computadores potentes, o prestador de serviço envia as fotos de um voo e recebe o mapa pronto.</p>
+    <h3 style="margin-top:0">1.1 Drones na agricultura</h3>
+    <p>Os drones já fazem parte da rotina de muitas operações agrícolas.</p>
+    <div class="destaque-numero">
+      O Brasil tem cerca de <strong>35 mil drones agrícolas</strong>, e o número cresceu <strong>12 vezes</strong> em cinco anos.<sup><a href="#ref-1">[1]</a></sup>
+    </div>
+    <p>Eles são usados de duas formas principais:</p>
+    <div class="grade grade-2">
+      <div class="cartao">
+        <figure>
+          <img src="img/img-operador-drone.webp" alt="Operador com colete e capacete controla, por um notebook, um drone que sobrevoa uma plantação de milho" width="1200" height="800" loading="lazy">
+        </figure>
+        <h4>Geração de mapas</h4>
+        <p>O drone fotografa a lavoura, e as fotos viram mapas usados para planejar e acompanhar a produção. <strong>É o foco deste estudo.</strong></p>
+      </div>
+      <div class="cartao">
+        <figure>
+          <img src="img/img-drone-pulverizando.webp" alt="Drone pulverizador aplicando defensivo sobre uma lavoura de soja" width="850" height="520" loading="lazy">
+        </figure>
+        <h4>Operações de campo</h4>
+        <p>A <strong>pulverização de precisão</strong>, por exemplo, aplica defensivos apenas onde é preciso. <em>Aparece aqui só como contexto e não é modelada.</em></p>
+      </div>
+    </div>
 
-    <div class="cartao-principal">
-      <figure style="margin:0">
-        <img src="img/exemplo_mapa_plataforma.png" alt="Tela de uma plataforma de mapas exibindo um talhão de 0,48 ha sobre imagem de satélite, colorido por um índice de vegetação" width="1914" height="934">
-        <figcaption>Exemplo do tipo de plataforma estudada: um talhão de 0,48 ha mapeado com câmera multiespectral, exibido na camada NDVI. A tela também oferece RGB e outros índices (GNDVI, NDRE, LCI e OSAVI). A imagem é ilustrativa: o estudo modela apenas os produtos descritos abaixo.</figcaption>
+    <h3>1.2 Exemplos de mapas</h3>
+    <div class="grade grade-2">
+      <div class="cartao">
+        <h4>Mapa topográfico</h4>
+        <p>Mostra o relevo do terreno, com a altura de cada ponto. Serve, por exemplo, para dimensionar um sistema de irrigação, já que o relevo determina o caminho da água e a pressão necessária nas tubulações. <em>Fonte a buscar.</em></p>
+        <p>É esse o tipo de mapa modelado no estudo, formado por ortomosaico e modelo de elevação (ver <a href="#dentro-da-plataforma">2.2</a>).</p>
+      </div>
+      <div class="cartao">
+        <h4>Mapa NDVI</h4>
+        <p>Um índice de vegetação calculado a partir de câmeras multiespectrais, que ajuda o produtor a estimar o vigor da plantação e a encontrar áreas com problema. <em>Fonte a buscar.</em></p>
+        <p><em>Fica fora do escopo do modelo.</em></p>
+      </div>
+    </div>
+
+    <div class="grade grade-2">
+      <figure class="cartao-principal" style="margin:0">
+        <img src="img/mapa-ndvi.jpeg" alt="Mapa NDVI de um talhão sobre imagem de satélite, com áreas vermelhas de baixo vigor no centro e verdes nas bordas" width="984" height="686" loading="lazy">
+        <figcaption>Mapa NDVI de um talhão: o vermelho indica vegetação de baixo vigor, e o verde, vegetação vigorosa.</figcaption>
+      </figure>
+      <figure class="cartao-principal" style="margin:0">
+        <img src="img/exemplo_mapa_plataforma.png" alt="Tela de uma plataforma de mapas exibindo um talhão de 0,48 ha sobre imagem de satélite, colorido por um índice de vegetação" width="1914" height="934" loading="lazy">
+        <figcaption>Exemplo do tipo de plataforma estudada: um talhão de 0,48 ha na camada NDVI, com opções de RGB e outros índices (GNDVI, NDRE, LCI e OSAVI). A imagem é ilustrativa: o estudo modela apenas ortomosaico e modelo de elevação.</figcaption>
       </figure>
     </div>
 
-    <h3>Um dia do prestador de serviço</h3>
-    <div class="grade grade-2">
+    <h3>1.3 Como os mapas são gerados hoje</h3>
+    <div class="grade grade-3">
       <div class="cartao">
         <div class="selo azul-escuro" aria-hidden="true">1</div>
         <h4>Pela manhã</h4>
-        <p>A equipe do prestador sai para atender uma fazenda. O cliente quer um mapa atualizado de um <strong>talhão</strong>, uma área delimitada da lavoura, para acompanhar o terreno e a plantação.</p>
+        <p>A equipe de um <strong>prestador de serviço</strong> sai para atender uma fazenda. O cliente quer um mapa atualizado de um <strong>talhão</strong>, uma área delimitada da lavoura, para acompanhar o terreno e a plantação.</p>
       </div>
       <div class="cartao">
         <div class="selo azul" aria-hidden="true">2</div>
         <h4>Em campo</h4>
-        <p>O operador define a área do voo e o drone percorre o talhão em faixas paralelas. Ele fotografa o terreno em intervalos regulares, de modo que cada foto se sobreponha às vizinhas. É essa sobreposição que depois permite montar uma imagem única e reconstruir o relevo. Ao final, os arquivos ficam no cartão do drone, e a equipe segue para o próximo voo ou para outra fazenda.</p>
+        <p>O operador define a área do voo e o drone percorre o talhão em faixas paralelas. Ele fotografa o terreno em intervalos regulares, de modo que cada foto se sobreponha às vizinhas. É essa sobreposição que depois permite montar uma imagem única e reconstruir o relevo. Como referência, um mapeamento de <strong>14 ha levou cerca de 23 minutos</strong> de voo.<sup><a href="#ref-2">[2]</a></sup> Ao final, os arquivos ficam no cartão do drone, e a equipe segue para o próximo voo ou para outra fazenda.</p>
       </div>
       <div class="cartao">
         <div class="selo laranja" aria-hidden="true">3</div>
         <h4>No fim do dia</h4>
-        <p>A equipe volta à empresa e envia à plataforma os arquivos de cada voo. Cada voo enviado dá origem a um <strong>mapa</strong>, que é o que a plataforma processa. O prestador não precisa acompanhar o processamento: ele fecha a plataforma e é notificado quando o mapa fica pronto.</p>
-      </div>
-      <div class="cartao">
-        <div class="selo verde" aria-hidden="true">4</div>
-        <h4>Às vezes falta algo</h4>
-        <p>Como fotos que ficaram para trás ao copiar o cartão. Nesse caso, a plataforma avisa o prestador, que envia o que faltou, e o mapa volta a ser conferido.</p>
+        <p>A equipe volta à empresa e sobe os arquivos de cada voo em uma <strong>plataforma web</strong>, que processa os dados e monta os mapas.</p>
       </div>
     </div>
 
-    <h3>O que a plataforma processa</h3>
+    <h3>1.4 Objetivo do trabalho</h3>
+    <div class="aviso">
+      <p>Modelar e simular essa plataforma web, que recebe os arquivos dos voos e os transforma em mapas, para avaliar se ela entrega os mapas no prazo no período de maior demanda.</p>
+    </div>
+  </section>
+
+  <section id="plataforma">
+    <p class="sobrelinha">Seção 2</p>
+    <h2>Plataforma de processamento de dados do drone</h2>
+
+    <h3 style="margin-top:0">2.1 Visão do usuário</h3>
+    <p>Para o prestador, o uso é simples: ele sobe os arquivos de cada voo e aguarda. Não precisa instalar software nem manter computadores potentes. Também não precisa acompanhar o processamento: fecha a plataforma e é notificado quando o mapa fica pronto.</p>
+    <p>Cada voo enviado dá origem a um <strong>mapa</strong>, que é o que a plataforma processa.</p>
+    <div class="grade grade-2">
+      <div class="cartao">
+        <h4>Quantidade de imagens por voo</h4>
+        <p>De 20 a 200, com valor mais comum de 80 (ver <a href="#distribuicoes">4.2</a>).</p>
+      </div>
+      <div class="cartao">
+        <h4>Tamanho dos arquivos</h4>
+        <p>No mapeamento de 14 ha citado em 1.3, o drone gerou <strong>87 fotos JPG de 11,7 MB cada</strong>, cerca de <strong>1 GB por voo</strong>.<sup><a href="#ref-2">[2]</a></sup></p>
+      </div>
+    </div>
+    <p>Às vezes falta algo, como fotos que ficaram para trás ao copiar o cartão. Nesse caso, a plataforma avisa o prestador, que envia o que faltou, e o mapa volta a ser conferido.</p>
+
+    <h3 id="dentro-da-plataforma">2.2 Dentro da plataforma</h3>
+    <p>Quando recebe os arquivos, a plataforma começa o tratamento dos dados:</p>
     <div class="grade grade-4">
       <div class="cartao">
         <div class="selo azul-escuro" aria-hidden="true">1</div>
         <h4>Validação</h4>
-        <p>Confere se o prestador enviou todos os arquivos necessários. Essa etapa roda em CPU, antes de ocupar uma GPU.</p>
+        <p>Confere se o prestador enviou todos os arquivos necessários. Essa etapa roda em CPU, antes de ocupar um servidor de processamento.</p>
       </div>
       <div class="cartao">
         <div class="selo azul" aria-hidden="true">2</div>
@@ -317,21 +397,14 @@
       </div>
     </div>
 
-    <h3>O problema de gestão</h3>
-    <p>Como as equipes voltam do campo em horários parecidos, os envios se concentram no fim do dia e disputam as mesmas GPUs. Formam-se filas justamente no período de maior demanda, e o prestador tem um prazo a cumprir com o cliente.</p>
-    <p>A plataforma promete o mapa em até <strong>5 minutos</strong>. A gestão precisa saber se a capacidade atual cumpre essa meta no pico ou se vale a pena acrescentar uma GPU.</p>
-  </section>
-
-  <section id="modelo-conceitual">
-    <p class="sobrelinha">Parte 2</p>
-    <h2>Modelo conceitual</h2>
-
-    <h3 style="margin-top:0">Fluxograma</h3>
+    <p>O alinhamento e os produtos rodam em <strong>servidores de processamento</strong>, máquinas com GPU dedicadas à fotogrametria. Os servidores são divididos em dois grupos, um para voos pequenos e outro para voos grandes, para que os mapas grandes não bloqueiem os pequenos.</p>
+    <p>Como referência, o SmartFarm Web processou o ortomosaico e o modelo digital de superfície de um mapa de <strong>12 ha em cerca de 5 minutos</strong>.<sup><a href="#ref-3">[3]</a></sup> Esse tempo não inclui o upload das imagens, que também fica fora do modelo.</p>
+    <p>O fluxograma abaixo mostra esse caminho como ele é representado no modelo:</p>
     <div class="cartao-principal">
       <div class="fluxo-rolagem">
         <svg class="fluxo" viewBox="0 0 1100 620" role="img" aria-labelledby="fluxo-titulo fluxo-desc">
           <title id="fluxo-titulo">Fluxograma do modelo conceitual</title>
-          <desc id="fluxo-desc">O mapa entra no fim do upload, passa pela fila da CPU e pela validação. Se faltar arquivo, o prestador corrige e o mapa volta à fila da CPU. Se estiver completo, o número de imagens define a rota: GPU comum ou GPU de alta capacidade. Em cada rota há fila, alinhamento, ortomosaico e modelo de elevação em paralelo, e junção. As duas rotas terminam na notificação de mapa pronto.</desc>
+          <desc id="fluxo-desc">O mapa entra no fim do upload, passa pela fila da CPU e pela validação. Se faltar arquivo, o prestador corrige e o mapa volta à fila da CPU. Se estiver completo, o número de imagens define a rota: servidores de voos pequenos ou de voos grandes. Em cada rota há fila, alinhamento, ortomosaico e modelo de elevação em paralelo, e junção. As duas rotas terminam na notificação de mapa pronto.</desc>
           <defs>
             <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
               <path d="M0 0 L10 5 L0 10 z" fill="#0f3d7a"/>
@@ -340,9 +413,9 @@
 
           <!-- Raias das rotas -->
           <rect x="270" y="258" width="625" height="160" rx="8" fill="#f5f8fc" stroke="#d3e0f2" stroke-width="2"/>
-          <text class="raia-titulo" x="288" y="280">GPU comum (2) · fila única para todas as etapas</text>
+          <text class="raia-titulo" x="288" y="280">Servidores de voos pequenos (2) · fila única para todas as etapas</text>
           <rect x="270" y="438" width="625" height="160" rx="8" fill="#f5f8fc" stroke="#d3e0f2" stroke-width="2"/>
-          <text class="raia-titulo" x="288" y="460">GPU de alta capacidade (2) · fila única para todas as etapas</text>
+          <text class="raia-titulo" x="288" y="460">Servidores de voos grandes (3) · fila única para todas as etapas</text>
 
           <!-- Conexões da linha superior -->
           <path class="linha" marker-end="url(#seta)" d="M200 150 H230"/>
@@ -361,7 +434,7 @@
           <text class="rotulo fim" x="243" y="394">não</text>
           <text class="rotulo fim" x="243" y="492">sim</text>
 
-          <!-- Conexões da raia comum -->
+          <!-- Conexões da raia de voos pequenos -->
           <path class="linha" marker-end="url(#seta)" d="M420 349 H450"/>
           <path class="linha" d="M570 349 H590"/>
           <path class="linha" marker-end="url(#seta)" d="M590 349 V315 H610"/>
@@ -371,7 +444,7 @@
           <path class="linha" marker-end="url(#seta)" d="M760 349 H780"/>
           <path class="linha" d="M875 349 H915 V439"/>
 
-          <!-- Conexões da raia de alta capacidade -->
+          <!-- Conexões da raia de voos grandes -->
           <path class="linha" marker-end="url(#seta)" d="M420 529 H450"/>
           <path class="linha" d="M570 529 H590"/>
           <path class="linha" marker-end="url(#seta)" d="M590 529 V495 H610"/>
@@ -406,10 +479,10 @@
           <text class="escuro" x="130" y="435">num_imagens</text>
           <text class="escuro" x="130" y="453">&gt; limite?</text>
 
-          <!-- Raia comum -->
+          <!-- Raia de voos pequenos -->
           <rect x="290" y="319" width="130" height="60" rx="6" fill="#e8f0fa" stroke="#0f3d7a" stroke-width="2"/>
           <text class="escuro" x="355" y="344">Fila</text>
-          <text class="escuro" x="355" y="362">GPU comum</text>
+          <text class="escuro" x="355" y="362">voos pequenos</text>
           <rect x="450" y="319" width="120" height="60" rx="6" fill="#0f3d7a"/>
           <text class="branco" x="510" y="354">Alinhamento</text>
           <rect x="610" y="292" width="130" height="46" rx="6" fill="#2b6cc4"/>
@@ -420,10 +493,10 @@
           <rect x="780" y="319" width="95" height="60" rx="6" fill="#0f3d7a"/>
           <text class="branco" x="827" y="354">Junção</text>
 
-          <!-- Raia de alta capacidade -->
+          <!-- Raia de voos grandes -->
           <rect x="290" y="499" width="130" height="60" rx="6" fill="#e8f0fa" stroke="#0f3d7a" stroke-width="2"/>
-          <text class="escuro" x="355" y="524">Fila GPU</text>
-          <text class="escuro" x="355" y="542">alta capacidade</text>
+          <text class="escuro" x="355" y="524">Fila</text>
+          <text class="escuro" x="355" y="542">voos grandes</text>
           <rect x="450" y="499" width="120" height="60" rx="6" fill="#0f3d7a"/>
           <text class="branco" x="510" y="534">Alinhamento</text>
           <rect x="610" y="472" width="130" height="46" rx="6" fill="#2b6cc4"/>
@@ -441,16 +514,25 @@
         </svg>
       </div>
     </div>
-    <p class="legenda"><strong>Legenda do fluxo:</strong> o mapa entra quando termina o primeiro upload e passa pela validação em CPU. Se faltar arquivo, volta à fila da CPU após a correção pelo prestador. Se estiver completo, segue a rota definida pelo número de imagens e usa somente as GPUs desse grupo até o fim. Cada grupo tem uma única fila, usada por todas as etapas de GPU: depois do alinhamento, ortomosaico e modelo de elevação voltam a essa fila e disputam as GPUs com os mapas que ainda vão alinhar. A junção espera os dois produtos, e o mapa segue para a notificação.</p>
+    <p class="legenda"><strong>Legenda do fluxo:</strong> o mapa entra quando termina o primeiro upload e passa pela validação em CPU. Se faltar arquivo, volta à fila da CPU após a correção pelo prestador. Se estiver completo, segue a rota definida pelo número de imagens e usa somente os servidores desse grupo até o fim. Cada grupo tem uma única fila, usada por todas as etapas: depois do alinhamento, ortomosaico e modelo de elevação voltam a essa fila e disputam os servidores com os mapas que ainda vão alinhar. A junção espera os dois produtos, e o mapa segue para a notificação.</p>
 
-    <h3>Entidades e atributos</h3>
+    <h3>2.3 O problema de gestão</h3>
+    <p>Como as equipes voltam do campo em horários parecidos, os envios se concentram no fim do dia e disputam os mesmos servidores. Formam-se filas justamente no período de maior demanda, e o prestador tem um prazo a cumprir com o cliente.</p>
+    <p>A plataforma promete o mapa em até <strong>10 minutos</strong>. A gestão precisa saber se a capacidade atual cumpre essa meta no pico ou se vale a pena colocar <strong>mais um servidor em paralelo</strong>.</p>
+  </section>
+
+  <section id="modelagem">
+    <p class="sobrelinha">Seção 3</p>
+    <h2>Detalhes da modelagem</h2>
+
+    <h3 style="margin-top:0">3.1 Entidades e atributos</h3>
     <p><strong>Entidade:</strong> mapa, que representa o processamento de um voo, do fim do primeiro upload até a notificação.</p>
     <div class="tabela-rolagem">
       <table>
         <thead><tr><th>Atributo</th><th>Significado</th><th>Uso no modelo</th></tr></thead>
         <tbody>
-          <tr><td><code>num_imagens</code></td><td>Quantidade de imagens do voo</td><td>Define a rota e os tempos de GPU</td></tr>
-          <tr><td><code>rota</code></td><td>Comum ou alta capacidade</td><td>Define o grupo de GPUs</td></tr>
+          <tr><td><code>num_imagens</code></td><td>Quantidade de imagens do voo</td><td>Define a rota e os tempos de processamento</td></tr>
+          <tr><td><code>rota</code></td><td>Voo pequeno ou voo grande</td><td>Define o grupo de servidores</td></tr>
           <tr><td><code>tentativas</code></td><td>Número de passagens pela validação</td><td>Identifica mapas que precisaram de correção</td></tr>
           <tr><td><code>instante_entrada</code></td><td>Fim do primeiro upload</td><td>Início do lead time; não muda em caso de reenvio</td></tr>
           <tr><td><code>instante_saida</code></td><td>Notificação de mapa pronto</td><td>Fim do lead time</td></tr>
@@ -458,25 +540,25 @@
       </table>
     </div>
 
-    <h3>Recursos</h3>
+    <h3>3.2 Recursos</h3>
     <div class="tabela-rolagem">
       <table>
         <thead><tr><th>Recurso</th><th>Capacidade (cenário atual)</th><th>Etapas</th></tr></thead>
         <tbody>
           <tr><td><code>CPU</code></td><td>1</td><td>Validação</td></tr>
-          <tr><td><code>GPU comum</code></td><td>2</td><td>Alinhamento e produtos dos mapas até o limite de imagens</td></tr>
-          <tr><td><code>GPU de alta capacidade</code></td><td>2</td><td>Alinhamento e produtos dos mapas acima do limite</td></tr>
+          <tr><td><code>Servidores de voos pequenos</code></td><td>2</td><td>Alinhamento e produtos dos mapas até o limite de imagens</td></tr>
+          <tr><td><code>Servidores de voos grandes</code></td><td>3</td><td>Alinhamento e produtos dos mapas acima do limite</td></tr>
         </tbody>
       </table>
     </div>
-    <p>Cada etapa ocupa uma unidade do recurso e a libera ao terminar. Os dois produtos disputam as GPUs de forma independente, então só rodam ao mesmo tempo se houver duas livres.</p>
+    <p>Cada servidor é uma máquina com GPU, e todos têm a mesma velocidade. Cada etapa ocupa um servidor e o libera ao terminar. Os dois produtos disputam os servidores de forma independente, então só rodam ao mesmo tempo se houver dois livres.</p>
     <p>O prestador não é um recurso: a correção é um atraso sem fila, porque cada um corrige o próprio envio.</p>
 
-    <h3>Filas</h3>
-    <p><code>Fila CPU</code>, <code>Fila GPU comum</code> e <code>Fila GPU de alta capacidade</code>, todas FIFO e sem limite de buffer. Nenhum mapa é descartado ou desiste.</p>
-    <p>Cada grupo de GPUs tem uma única fila, compartilhada por alinhamento, ortomosaico e modelo de elevação. Um mapa entra nela três vezes, uma por tarefa, e a GPU que fica livre pega a tarefa mais antiga, sem distinguir o tipo.</p>
+    <h3>3.3 Filas</h3>
+    <p><code>Fila CPU</code>, <code>Fila voos pequenos</code> e <code>Fila voos grandes</code>, todas FIFO e sem limite de buffer. Nenhum mapa é descartado ou desiste.</p>
+    <p>Cada grupo de servidores tem uma única fila, compartilhada por alinhamento, ortomosaico e modelo de elevação. Um mapa entra nela três vezes, uma por tarefa, e o servidor que fica livre pega a tarefa mais antiga, sem distinguir o tipo.</p>
 
-    <h3>Regras de fluxo</h3>
+    <h3>3.4 Regras de fluxo</h3>
     <div class="grade grade-2">
       <div class="cartao">
         <h4>Decisão por probabilidade</h4>
@@ -488,7 +570,7 @@
       </div>
       <div class="cartao">
         <h4>Decisão por condição</h4>
-        <p>Mapas com <code>num_imagens</code> acima do limite vão para a GPU de alta capacidade; os demais, para a GPU comum.</p>
+        <p>Mapas com <code>num_imagens</code> acima do limite vão para os servidores de voos grandes; os demais, para os de voos pequenos.</p>
       </div>
       <div class="cartao">
         <h4>Fluxo paralelo</h4>
@@ -496,77 +578,103 @@
       </div>
     </div>
 
-    <h3>Chegadas e horizonte</h3>
+    <h3>3.5 Indicadores</h3>
+    <div class="grade grade-2">
+      <div class="cartao">
+        <div class="selo azul-escuro" aria-hidden="true">1</div>
+        <h4>P90 do lead time (indicador principal)</h4>
+        <p>Em minutos, medido do fim do primeiro upload até a notificação de mapa pronto, incluída a correção pelo prestador, com meta de até 10 min. É calculado por noite simulada, e o IC de 95% é obtido entre as replicações.</p>
+      </div>
+      <div class="cartao">
+        <div class="selo azul" aria-hidden="true">2</div>
+        <h4>Mapas fora do prazo</h4>
+        <p>Em mapas por noite, medidos do fim do primeiro upload até a notificação de mapa pronto, contando aqueles com lead time acima de 10 min, com meta de até 10% dos mapas da noite. <em>O percentual é uma proposta a confirmar.</em></p>
+      </div>
+    </div>
+    <p><strong>Complementares:</strong> lead time médio (min), vazão (mapas/h) e utilização de cada grupo de servidores (%).</p>
+
+    <h3 id="implementacao">3.6 Implementação</h3>
+    <p>O modelo está em <code>../simulacao/</code>, em scripts Python que rodam localmente. Os parâmetros ficam como constantes no topo de <code>modelo.py</code>, com os mesmos valores da <a href="#distribuicoes">seção 4.2</a>.</p>
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Elemento do modelo</th><th>Onde está no código (<code>modelo.py</code>)</th></tr></thead>
+        <tbody>
+          <tr><td>Entidade mapa e seus atributos</td><td>classe <code>Mapa</code> (<code>num_imagens</code>, <code>rota</code>, <code>tentativas</code>, <code>instante_entrada</code>, <code>instante_saida</code>)</td></tr>
+          <tr><td>Chegadas da noite</td><td><code>gerar_mapas</code> sorteia a quantidade (Poisson), os horários (Triangular) e <code>num_imagens</code>; <code>chegadas</code> libera cada mapa no seu horário</td></tr>
+          <tr><td>Validação e reenvio</td><td>laço em <code>processar_mapa</code>: CPU (<code>simpy.Resource</code>), sorteio da falta de arquivos e atraso da correção</td></tr>
+          <tr><td>Rota por <code>num_imagens</code></td><td>definida em <code>gerar_mapas</code> (<code>num_imagens &gt; LIMITE_ROTA</code>)</td></tr>
+          <tr><td>Servidores e filas</td><td>um <code>simpy.Resource</code> por grupo, com fila FIFO única para as três etapas</td></tr>
+          <tr><td>Alinhamento, produtos em paralelo e junção</td><td><code>tarefa_servidor</code>; os dois produtos são processos SimPy separados, e a junção é <code>ortomosaico &amp; elevacao</code></td></tr>
+          <tr><td>Monitor para gráficos e animação</td><td><code>monitor</code> amostra filas, servidores ocupados e mapas concluídos a cada 0,5 min</td></tr>
+          <tr><td>Indicadores</td><td><code>calcular_metricas</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Os outros scripts usam esse módulo: <code>executar_cenarios.py</code> roda as 30 replicações por cenário e calcula os IC; <code>graficos.py</code> gera os gráficos da <a href="#resultados">seção 5.3</a>. Para rodar, a partir de <code>grau-b/simulacao/</code>: <code>../../.venv/bin/python executar_cenarios.py</code> e <code>../../.venv/bin/python graficos.py</code>.</p>
+    <p>Cada mapa tem um gerador aleatório próprio, derivado da semente da replicação e do seu número. Assim, a replicação <em>i</em> tem os mesmos mapas e os mesmos tempos nos dois cenários (números aleatórios comuns), e a diferença entre eles vem só da capacidade.</p>
+  </section>
+
+  <section id="experimento">
+    <p class="sobrelinha">Seção 4</p>
+    <h2>Experimento e premissas</h2>
+
+    <h3 style="margin-top:0">4.1 Chegadas e horizonte</h3>
     <p>Os envios se concentram no fim do dia, com pico entre 17h e 21h. Cada replicação simula uma noite de pico, com relógio em minutos, e termina quando o último mapa fica pronto. Por isso, é uma simulação terminante.</p>
 
-    <h3>Distribuições de entrada</h3>
+    <h3 id="distribuicoes">4.2 Distribuições de entrada</h3>
     <div class="aviso">
-      <p><strong>Todos os valores são iniciais e estão a verificar.</strong> Ainda não têm fonte, e a coluna de justificativa será preenchida na verificação, como exige o enunciado.</p>
+      <p>Os tempos de processamento vêm de um benchmark publicado.<sup><a href="#ref-4">[4]</a></sup> Validação, falta de arquivos e correção ainda não têm fonte.</p>
     </div>
     <div class="tabela-rolagem">
       <table>
         <thead><tr><th>Grandeza</th><th>Distribuição</th><th>Parâmetros</th><th>Unidade</th><th>Justificativa</th></tr></thead>
         <tbody>
-          <tr><td>Mapas por noite</td><td>Poisson</td><td>média 250</td><td>mapas/noite</td><td class="pendente">A preencher</td></tr>
-          <tr><td>Horário de envio</td><td>Triangular</td><td>mín 17h, moda 18h30, máx 21h</td><td>hora</td><td class="pendente">Retorno concentrado das equipes; valores a preencher</td></tr>
-          <tr><td><code>num_imagens</code></td><td>Triangular</td><td>mín 20, moda 80, máx 200</td><td>imagens</td><td class="pendente">Mapas pequenos (poucas imagens); valores a preencher</td></tr>
-          <tr><td>Limite da rota</td><td>Constante</td><td>80</td><td>imagens</td><td class="pendente">A preencher</td></tr>
+          <tr><td>Mapas por noite</td><td>Poisson</td><td>média 100</td><td>mapas/noite</td><td>Dimensionada para que os servidores de voos grandes fiquem perto de 90% de ocupação no pico do cenário atual</td></tr>
+          <tr><td>Horário de envio</td><td>Triangular</td><td>mín 17h, moda 18h30, máx 21h</td><td>hora</td><td>Retorno concentrado das equipes no fim do dia, com pico às 18h30</td></tr>
+          <tr><td><code>num_imagens</code></td><td>Triangular</td><td>mín 20, moda 80, máx 200</td><td>imagens</td><td>Exemplo real: 14 ha geraram 87 imagens <a href="#ref-2">[2]</a>, perto da moda</td></tr>
+          <tr><td>Limite da rota</td><td>Constante</td><td>80</td><td>imagens</td><td>Igual à moda: cerca de 1/3 dos mapas vai para os servidores de voos pequenos</td></tr>
           <tr><td>Tempo de validação</td><td>Uniform</td><td>mín 5, máx 15</td><td>s</td><td class="pendente">A preencher</td></tr>
           <tr><td>Falta de arquivos</td><td>Bernoulli</td><td>5% por tentativa</td><td>probabilidade</td><td class="pendente">A preencher</td></tr>
           <tr><td>Tempo de correção</td><td>Uniform</td><td>mín 1, máx 3</td><td>min</td><td class="pendente">A preencher</td></tr>
-          <tr><td>Alinhamento, GPU comum</td><td>Uniform</td><td>mín 0,3, máx 0,5</td><td>s/imagem</td><td class="pendente">A preencher</td></tr>
-          <tr><td>Ortomosaico, GPU comum</td><td>Uniform</td><td>mín 0,4, máx 0,6</td><td>s/imagem</td><td class="pendente">A preencher</td></tr>
-          <tr><td>Modelo de elevação, GPU comum</td><td>Uniform</td><td>mín 0,3, máx 0,5</td><td>s/imagem</td><td class="pendente">A preencher</td></tr>
-          <tr><td>GPU de alta capacidade</td><td>Fator sobre a GPU comum</td><td>0,5 × o tempo</td><td>adimensional</td><td class="pendente">A preencher</td></tr>
+          <tr><td>Alinhamento</td><td>Uniform</td><td>mín 0,69, máx 1,03</td><td>s/imagem</td><td>Etapa <em>calibration</em> do PIX4Dmatic: 86 s para 100 imagens, ou 0,86 s/imagem <a href="#ref-4">[4]</a>; variação de ±20% assumida</td></tr>
+          <tr><td>Modelo de elevação</td><td>Uniform</td><td>mín 1,22, máx 1,84</td><td>s/imagem</td><td>Etapas <em>dense point cloud</em> e <em>DSM</em>: 115 s + 38 s para 100 imagens, ou 1,53 s/imagem <a href="#ref-4">[4]</a>; variação de ±20% assumida</td></tr>
+          <tr><td>Ortomosaico</td><td>Uniform</td><td>mín 0,15, máx 0,23</td><td>s/imagem</td><td>Etapa <em>orthomosaic</em>: 19 s para 100 imagens, ou 0,19 s/imagem <a href="#ref-4">[4]</a>; variação de ±20% assumida</td></tr>
         </tbody>
       </table>
     </div>
-    <p>Em cada etapa de GPU, o tempo é <code>num_imagens</code> × tempo por imagem sorteado × fator da GPU (1 na comum).</p>
+    <p>Em cada etapa de processamento, o tempo é <code>num_imagens</code> × tempo por imagem sorteado. Os dois grupos de servidores têm a mesma velocidade.</p>
+    <p><strong>Conferência com a plataforma real:</strong> com esses tempos, um mapa de 12 ha (cerca de 75 imagens, a 6 imagens/ha<sup><a href="#ref-2">[2]</a></sup>) leva cerca de 3 min sem fila: 64 s de alinhamento e 115 s de modelo de elevação. O SmartFarm Web levou cerca de 5 min para o mesmo tamanho.<sup><a href="#ref-3">[3]</a></sup> A ordem de grandeza bate, e a diferença cabe no overhead da nuvem.</p>
 
-    <h3>Indicadores</h3>
-    <div class="grade grade-2">
-      <div class="cartao">
-        <div class="selo azul-escuro" aria-hidden="true">1</div>
-        <h4>P90 do lead time (indicador principal)</h4>
-        <p>Em minutos, medido do fim do primeiro upload até a notificação de mapa pronto, incluída a correção pelo prestador, com meta de até 5 min. É calculado por noite simulada, e o IC de 95% é obtido entre as replicações.</p>
-      </div>
-      <div class="cartao">
-        <div class="selo azul" aria-hidden="true">2</div>
-        <h4>Mapas fora do prazo</h4>
-        <p>Em mapas por noite, medidos do fim do primeiro upload até a notificação de mapa pronto, contando aqueles com lead time acima de 5 min, com meta de até 10% dos mapas da noite. <em>O percentual é uma proposta a confirmar.</em></p>
-      </div>
-    </div>
-    <p><strong>Complementares:</strong> lead time médio (min), vazão (mapas/h) e utilização de cada grupo de GPUs (%).</p>
-
-    <h3>Cenários</h3>
+    <h3>4.3 Cenários</h3>
     <div class="tabela-rolagem">
       <table>
-        <thead><tr><th>Cenário</th><th>GPUs comuns</th><th>GPUs de alta capacidade</th><th>Demanda</th><th>Replicações</th></tr></thead>
+        <thead><tr><th>Cenário</th><th>Servidores de voos pequenos</th><th>Servidores de voos grandes</th><th>Demanda</th><th>Replicações</th></tr></thead>
         <tbody>
-          <tr><td><strong>Atual</strong></td><td>2</td><td>2</td><td>Pico</td><td>≥ 30</td></tr>
-          <tr><td><strong>GPU extra</strong></td><td>2</td><td>3</td><td>Pico</td><td>≥ 30</td></tr>
+          <tr><td><strong>Atual</strong></td><td>2</td><td>3</td><td>Pico</td><td>≥ 30</td></tr>
+          <tr><td><strong>Servidor extra</strong></td><td>2</td><td>4</td><td>Pico</td><td>≥ 30</td></tr>
         </tbody>
       </table>
     </div>
+    <p>O servidor extra vai para o grupo de voos grandes, que é o gargalo. Pela conta manual no instante de maior demanda (cerca de 50 mapas/h), esse grupo fica perto de 96% de ocupação no cenário atual e de 72% com o servidor extra. O grupo de voos pequenos fica perto de 36%.</p>
     <p>A comparação usa o IC de 95% do P90 do lead time. Intervalos que não se sobrepõem indicam diferença conclusiva; intervalos sobrepostos não permitem concluir pela diferença.</p>
 
-    <h3>Questões do estudo</h3>
+    <h3>4.4 Questões do estudo</h3>
     <div class="grade grade-3">
       <div class="cartao">
         <div class="selo azul-escuro" aria-hidden="true">1</div>
-        <p>Na situação atual, o <strong>P90 do lead time</strong> atende à meta de 5 min no pico?</p>
+        <p>Na situação atual, o <strong>P90 do lead time</strong> atende à meta de 10 min no pico?</p>
       </div>
       <div class="cartao">
         <div class="selo azul" aria-hidden="true">2</div>
-        <p>Uma GPU de alta capacidade a mais <strong>reduz o P90 do lead time</strong> com IC sem sobreposição? Em quantos minutos?</p>
+        <p>Um servidor a mais em paralelo <strong>reduz o P90 do lead time</strong> com IC sem sobreposição? Em quantos minutos?</p>
       </div>
       <div class="cartao">
         <div class="selo laranja" aria-hidden="true">3</div>
-        <p>Quantos mapas por noite <strong>deixam de ficar fora do prazo</strong> com a GPU extra?</p>
+        <p>Quantos mapas por noite <strong>deixam de ficar fora do prazo</strong> com o servidor extra?</p>
       </div>
     </div>
 
-    <h3>Classificação do sistema</h3>
+    <h3>4.5 Classificação do sistema</h3>
     <div class="grade grade-3">
       <div class="cartao">
         <h4>Dinâmico</h4>
@@ -582,34 +690,134 @@
       </div>
     </div>
 
-    <h3>Hipóteses e simplificações</h3>
+    <h3>4.6 Hipóteses e simplificações</h3>
     <ul>
-      <li><strong>Mapas pequenos (poucas imagens):</strong> fotogrametria completa de voos grandes costuma levar bem mais de 5 min, portanto o estudo vale para voos pequenos. Essa afirmação ainda precisa de fonte.</li>
-      <li><strong>Tempos proporcionais:</strong> os tempos de GPU crescem na proporção do número de imagens.</li>
+      <li><strong>Voos de até 200 imagens:</strong> com cerca de 2,4 s por imagem entre alinhamento e modelo de elevação,<sup><a href="#ref-4">[4]</a></sup> um mapa de 200 imagens leva cerca de 8 min sem fila, dentro da meta de 10 min. Voos maiores ficam fora do escopo.</li>
+      <li><strong>Tempos proporcionais:</strong> os tempos de processamento crescem na proporção do número de imagens.</li>
+      <li><strong>Servidores iguais:</strong> todos têm a mesma velocidade, porque a GPU muda pouco o tempo total.<sup><a href="#ref-4">[4]</a> <a href="#ref-5">[5]</a></sup></li>
+      <li><strong>Ortomosaico em paralelo:</strong> no PIX4Dmatic, o ortomosaico é gerado depois do modelo de superfície.<sup><a href="#ref-4">[4]</a></sup> O modelo trata os dois em paralelo. Como o ortomosaico é curto (0,19 s/imagem), o efeito no lead time é pequeno.</li>
       <li><strong>Upload fora do modelo:</strong> o relógio começa no fim do primeiro upload. O envio dos faltantes faz parte do tempo de correção.</li>
       <li><strong>Prestador sempre corrige:</strong> não há desistência, e a correção não depende de quantos arquivos faltaram.</li>
-      <li><strong>Sem falhas técnicas:</strong> as GPUs não param, e o alinhamento e a geração dos produtos sempre dão certo.</li>
+      <li><strong>Sem falhas técnicas:</strong> os servidores não param, e o alinhamento e a geração dos produtos sempre dão certo.</li>
       <li><strong>Mapas de índices fora do escopo:</strong> a plataforma do exemplo também exibe índices como o NDVI, mas o estudo modela apenas ortomosaico e modelo de elevação.</li>
       <li><strong>Apenas a noite de pico:</strong> os resultados não se aplicam a períodos de demanda normal.</li>
     </ul>
   </section>
 
+  <section id="resultados">
+    <p class="sobrelinha">Seção 5</p>
+    <h2>Resultados da simulação</h2>
+    <div class="aviso">
+      <p>Os resultados foram gerados pelo programa em <code>../simulacao/</code>, com 30 replicações por cenário. Os dois cenários usam números aleatórios comuns: a replicação <em>i</em> tem os mesmos mapas e os mesmos tempos sorteados nos dois cenários, e só muda o número de servidores.</p>
+    </div>
+
+    <h3>5.1 Indicadores por cenário</h3>
+    <p>Média das 30 noites, com IC de 95% (t de Student).</p>
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Indicador</th><th>Atual (2 + 3 servidores)</th><th>Servidor extra (2 + 4 servidores)</th><th>Meta</th></tr></thead>
+        <tbody>
+          <tr><td><strong>P90 do lead time</strong></td><td><strong>9,47 min</strong>, IC [8,74; 10,20]</td><td><strong>7,10 min</strong>, IC [6,89; 7,32]</td><td>até 10 min</td></tr>
+          <tr><td><strong>Mapas fora do prazo</strong></td><td><strong>8,3 mapas/noite</strong>, IC [5,7; 10,9]</td><td><strong>0,7 mapas/noite</strong>, IC [0,1; 1,2]</td><td>—</td></tr>
+          <tr><td>Mapas fora do prazo (%)</td><td>8,5%, IC [5,9; 11,0]</td><td>0,7%, IC [0,1; 1,2]</td><td>até 10%</td></tr>
+          <tr><td>Lead time médio</td><td>5,37 min, IC [5,12; 5,61]</td><td>4,57 min, IC [4,46; 4,68]</td><td>—</td></tr>
+          <tr><td>Vazão</td><td>25,5 mapas/h</td><td>25,5 mapas/h</td><td>—</td></tr>
+          <tr><td>Utilização, voos grandes (noite inteira)</td><td>47,5%</td><td>35,6%</td><td>—</td></tr>
+          <tr><td>Utilização, voos pequenos (noite inteira)</td><td>19,5%</td><td>19,5%</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="legenda">"2 + 3 servidores" significa 2 servidores de voos pequenos e 3 de voos grandes. A vazão é igual nos dois cenários porque todos os mapas terminam e a noite acaba quase na mesma hora; por isso ela não serve para comparar os cenários.</p>
+
+    <h3>5.2 Respostas às questões do estudo</h3>
+    <div class="grade grade-3">
+      <div class="cartao">
+        <div class="selo azul-escuro" aria-hidden="true">1</div>
+        <h4>O cenário atual atende à meta?</h4>
+        <p>Não é possível afirmar. O P90 médio é de 9,47 min, mas o IC [8,74; 10,20] contém a meta de 10 min. Na prática, o cenário atual opera no limite.</p>
+      </div>
+      <div class="cartao">
+        <div class="selo azul" aria-hidden="true">2</div>
+        <h4>Um servidor a mais reduz o P90?</h4>
+        <p>Sim. O P90 cai <strong>2,37 min</strong>, de 9,47 para 7,10 min, e os intervalos não se sobrepõem: a diferença é conclusiva. Com o servidor extra, o IC inteiro fica abaixo da meta.</p>
+      </div>
+      <div class="cartao">
+        <div class="selo laranja" aria-hidden="true">3</div>
+        <h4>Quantos mapas saem do atraso?</h4>
+        <p>Cerca de <strong>7,7 mapas por noite</strong>, de 8,3 para 0,7. Dentro da meta, a proporção de mapas sobe de 91,4% para 99,3%.</p>
+      </div>
+    </div>
+
+    <h3>5.3 Gráficos</h3>
+
+    <p><strong>Chegada dos mapas.</strong> Os envios crescem a partir das 17h, chegam ao pico entre 18h30 e 18h45 (cerca de 12 mapas a cada 15 min) e caem até as 21h. Esse pico é o que forma a fila.</p>
+    <figure class="cartao-principal">
+      <img src="../simulacao/resultados/graficos/chegadas_por_intervalo.png" alt="Barras com a média de mapas que chegam a cada 15 minutos, das 17h às 21h, com pico de 11,7 mapas entre 18h30 e 18h45" loading="lazy">
+    </figure>
+
+    <p><strong>Fila dos servidores de voos grandes, em degraus.</strong> Uma noite simulada, com os mesmos mapas nos dois cenários. A fila conta tarefas, e cada mapa entra nela três vezes (alinhamento, ortomosaico e elevação). No cenário atual, a fila chega a 8 tarefas entre 18h45 e 19h05; com o servidor extra, a mesma onda chega a 5 e esvazia mais rápido. No resto da noite, a fila fica praticamente vazia nos dois cenários.</p>
+    <figure class="cartao-principal">
+      <img src="../simulacao/resultados/graficos/fila_voos_grandes.png" alt="Dois painéis em degraus com as tarefas na fila de voos grandes ao longo da noite: máximo de 8 tarefas no cenário atual e de 5 com o servidor extra" loading="lazy">
+    </figure>
+
+    <div class="grade grade-2">
+      <figure class="cartao-principal" style="margin:0">
+        <img src="../simulacao/resultados/graficos/p90_lead_time_ic.png" alt="Barras do P90 do lead time: 9,47 min no cenário atual, com IC de 8,74 a 10,20, e 7,10 min com o servidor extra, com IC de 6,89 a 7,32, e linha tracejada na meta de 10 min" loading="lazy">
+        <figcaption>P90 do lead time por cenário, com IC em barras de erro: o gráfico de comparação do indicador principal.</figcaption>
+      </figure>
+      <figure class="cartao-principal" style="margin:0">
+        <img src="../simulacao/resultados/graficos/mapas_fora_prazo_ic.png" alt="Barras de mapas fora do prazo por noite: 8,3 no cenário atual e 0,7 com o servidor extra, com barras de erro do IC" loading="lazy">
+        <figcaption>Mapas fora do prazo por noite, com IC. O IC do cenário atual é largo porque algumas noites têm um pico mais forte que outras.</figcaption>
+      </figure>
+    </div>
+
+    <p><strong>Distribuição do lead time.</strong> Proporção de mapas prontos até cada tempo, juntando as 30 noites. Até cerca de 3,5 min as curvas coincidem: esses mapas são processados sem fila. Depois, o cenário atual tem uma cauda longa, com mapas de até cerca de 19 min; com o servidor extra, todos terminam em menos de 14 min. O servidor extra quase não muda o mapa típico, mas corta a cauda do pico, que é o que o P90 mede.</p>
+    <figure class="cartao-principal">
+      <img src="../simulacao/resultados/graficos/distribuicao_lead_time.png" alt="Curvas acumuladas do lead time nos dois cenários, com a meta de 10 min marcada: 91,4% dos mapas dentro da meta no cenário atual e 99,3% com o servidor extra" loading="lazy">
+    </figure>
+
+    <p><strong>Ocupação dos servidores ao longo da noite.</strong> A linha é a média das 30 noites, e a faixa sombreada cobre 80% das noites (do percentil 10 ao 90). No cenário atual, os servidores de voos grandes chegam a 88% de ocupação média por volta das 18h40, e a borda de cima da faixa encosta em 100% entre cerca de 18h e 19h40. Às 18h40, 27 das 30 noites estavam com os 3 servidores ocupados. A média fica abaixo de 100% porque o pico não acontece na mesma hora em todas as noites (de 17h59 a 19h19) e porque a curva é suavizada. Com o servidor extra, o pico médio cai para 72%, e a faixa raramente chega a 100%. Os servidores de voos pequenos não passam de 37% em média nos dois cenários.</p>
+    <figure class="cartao-principal">
+      <img src="../simulacao/resultados/graficos/ocupacao_servidores.png" alt="Dois painéis com a ocupação média e a faixa de 80% das noites para os servidores de voos pequenos e de voos grandes: pico de 88% nos voos grandes no cenário atual e de 72% com o servidor extra" loading="lazy">
+    </figure>
+
+    <h3>5.4 Conclusões e recomendações</h3>
+    <div class="grade grade-2">
+      <div class="cartao">
+        <h4>O gargalo está nos servidores de voos grandes</h4>
+        <p>Como previa a conta manual: 88% de ocupação média no pico, contra 37% nos de voos pequenos.</p>
+      </div>
+      <div class="cartao">
+        <h4>O cenário atual opera no limite da meta</h4>
+        <p>P90 de 9,47 min, com IC que contém os 10 min, e cerca de 8,3 mapas por noite fora do prazo.</p>
+      </div>
+      <div class="cartao">
+        <h4>Recomendação: um servidor de voos grandes a mais</h4>
+        <p>O P90 cai 2,37 min, para 7,10 min, com IC inteiro abaixo da meta, e os mapas fora do prazo caem de 8,3 para 0,7 por noite.</p>
+      </div>
+      <div class="cartao">
+        <h4>O ganho se concentra no pico</h4>
+        <p>Antes das 17h45 e depois das 20h, os dois grupos ficam abaixo de 50% de ocupação média. Se a plataforma roda na nuvem, um servidor a mais só no horário de pico pode dar ganho parecido com custo menor. <em>O modelo atual não testa essa alternativa.</em></p>
+      </div>
+    </div>
+  </section>
+
   <section id="requisitos">
-    <p class="sobrelinha">Enunciado, seção 3</p>
-    <h2>Atendimento aos requisitos</h2>
+    <p class="sobrelinha">Seção 6 · Controle do trabalho</p>
+    <h2>Atendimento aos requisitos do enunciado (seção 3)</h2>
     <div class="tabela-rolagem">
       <table>
         <thead><tr><th>Item</th><th>Requisito</th><th>Solução no modelo</th></tr></thead>
         <tbody>
-          <tr><td>a</td><td>Base do estudo</td><td>Este documento; justificativas das distribuições pendentes</td></tr>
+          <tr><td>a</td><td>Base do estudo</td><td>Este documento; justificativas das distribuições parcialmente pendentes</td></tr>
           <tr><td>b</td><td>Decisões</td><td>Probabilidade: falta de arquivos. Condição: rota por <code>num_imagens</code></td></tr>
           <tr><td>c</td><td>Indicadores</td><td>Mapas fora do prazo (contagem) e P90 do lead time</td></tr>
           <tr><td>d</td><td>Atributo com significado</td><td><code>num_imagens</code>, usado na rota e nos tempos</td></tr>
           <tr><td>e</td><td>Lotes ou duplicações</td><td>Ortomosaico e modelo de elevação em paralelo, com junção</td></tr>
-          <tr><td>f</td><td>Demonstração visual</td><td>Monitor amostra filas, GPUs ocupadas e mapas concluídos. A cena traz título do cenário, relógio, ao menos três indicadores com unidade e um gráfico com eixos rotulados</td></tr>
-          <tr><td>g</td><td>Gráficos de resultados</td><td>Mapas na fila da GPU de alta capacidade ao longo da noite, em degraus; P90 do lead time por cenário, com IC em barras de erro</td></tr>
-          <tr><td>h</td><td>Experimentação</td><td>Dois cenários, 30 ou mais replicações e IC de 95% do P90</td></tr>
-          <tr><td>i</td><td>Análise</td><td>A fazer após os resultados, sempre com número, unidade e comparação</td></tr>
+          <tr><td>f</td><td>Demonstração visual</td><td>Monitor implementado (amostras a cada 0,5 min). <strong>Falta</strong> a animação em MP4, com título do cenário, relógio, ao menos três indicadores com unidade e um gráfico com eixos rotulados</td></tr>
+          <tr><td>g</td><td>Gráficos de resultados</td><td>Gerados (seção 5.3): fila de voos grandes em degraus; P90 do lead time por cenário, com IC em barras de erro</td></tr>
+          <tr><td>h</td><td>Experimentação</td><td>Feito: dois cenários, 30 replicações cada e IC de 95% do P90 (seção 5.1)</td></tr>
+          <tr><td>i</td><td>Análise</td><td>Feito: conclusões e recomendações com número, unidade e comparação (seção 5.4)</td></tr>
         </tbody>
       </table>
     </div>
@@ -623,21 +831,25 @@
         <thead><tr><th>Decisão</th><th>Por quê</th><th>Alternativas descartadas</th></tr></thead>
         <tbody>
           <tr><td>Python + SimPy</td><td>Ferramenta aceita pela disciplina e já usada no Grau A</td><td>JaamSim, Arena</td></tr>
+          <tr><td>Scripts Python locais em vez de caderno</td><td>Mais fácil de rodar, versionar e dividir entre os integrantes</td><td>Caderno Jupyter (pode ser gerado no fim, se o enunciado exigir)</td></tr>
+          <tr><td>Números aleatórios comuns entre os cenários</td><td>A replicação <em>i</em> simula a mesma noite nos dois cenários, o que reduz a variância da comparação</td><td>Sementes independentes por cenário</td></tr>
           <tr><td>Usuário: prestador de serviço</td><td>Envia vários voos e tem prazos a cumprir com clientes, o que dá sentido à meta</td><td>Produtor rural; os dois perfis</td></tr>
           <tr><td>Upload ao fim do voo, chegando à plataforma no fim do dia</td><td>A equipe termina o campo, volta à empresa e sobe os arquivos, o que concentra a demanda</td><td>Envio imagem a imagem; upload no campo com falhas</td></tr>
           <tr><td>Prestador sai e é notificado</td><td>Corresponde ao uso esperado e mantém o lead time como foco</td><td>Cancelar na fila; reenviar por demora</td></tr>
-          <tr><td>Falha na validação, por falta de arquivos</td><td>É um erro do prestador, detectado antes de ocupar GPU</td><td>Falha no alinhamento; falha maior em mapas grandes; limite de reenvios</td></tr>
+          <tr><td>Falha na validação, por falta de arquivos</td><td>É um erro do prestador, detectado antes de ocupar um servidor</td><td>Falha no alinhamento; falha maior em mapas grandes; limite de reenvios</td></tr>
           <tr><td>Reenvio só dos faltantes, repetindo até dar certo</td><td>Todo mapa termina, e o lead time fica definido para todos</td><td>Reenviar o voo inteiro</td></tr>
           <tr><td>Lead time desde o primeiro envio</td><td>Mostra a espera real e segue a definição do enunciado</td><td>Contar cada envio separadamente</td></tr>
-          <tr><td>Rota por <code>num_imagens</code></td><td>É uma decisão condicional natural e dá uso direto ao atributo</td><td>Rejeição por qualidade; prioridade por prazo</td></tr>
-          <tr><td>Ortomosaico + modelo de elevação em paralelo</td><td>Tarefas paralelas a partir do alinhamento, sem exigir câmera multiespectral</td><td>Mapa de índices; blocos de imagens; voos em lote</td></tr>
-          <tr><td>2 GPUs por grupo</td><td>Os dois produtos podem rodar ao mesmo tempo em cada rota</td><td>Grupo único; grupo separado para os produtos</td></tr>
-          <tr><td>Fila única FIFO por grupo de GPUs</td><td>É a regra mais simples de implementar e explicar. Em troca, mapas já alinhados podem esperar atrás de novos mapas</td><td>Prioridade para os produtos; GPUs separadas por etapa</td></tr>
-          <tr><td>Comparar atual e GPU extra no pico</td><td>Responde diretamente à decisão de investimento</td><td>Fatorial 2×2; normal × pico; prioridade × FIFO</td></tr>
-          <tr><td>Meta de 5 min</td><td>Definida pelo grupo; a escala de tempo curta é parte do estudo</td><td>Metas de 12 h ou 24 h</td></tr>
-          <tr><td>Mapas pequenos (poucas imagens)</td><td>Tornam a meta de 5 min coerente com o tempo de processamento</td><td>Modo rápido hipotético; revisar a meta após pesquisa</td></tr>
+          <tr><td>Rota por <code>num_imagens</code></td><td>É uma decisão condicional natural, dá uso direto ao atributo e impede que mapas grandes bloqueiem os pequenos</td><td>Rejeição por qualidade; prioridade por prazo</td></tr>
+          <tr><td>Ortomosaico + modelo de elevação em paralelo</td><td>Tarefas paralelas a partir do alinhamento, sem exigir câmera multiespectral. Na prática o ortomosaico depende da superfície, mas é curto</td><td>Mapa de índices; blocos de imagens; voos em lote</td></tr>
+          <tr><td>Servidores de processamento, todos com a mesma velocidade</td><td>Benchmark mostra 5% a 9% de diferença entre GPUs <a href="#ref-4">[4]</a>; a GPU acelera só o alinhamento <a href="#ref-5">[5]</a></td><td>Velocidades diferentes por grupo de servidores</td></tr>
+          <tr><td>Tempos por imagem do benchmark da Puget Systems</td><td>É a fonte mais recente encontrada com tempo por etapa, em 100 imagens, perto da nossa moda</td><td>OpenDroneMap, cerca de 10 vezes mais lento <a href="#ref-6">[6]</a>; comparações entre softwares com resultados contraditórios</td></tr>
+          <tr><td>Fila única FIFO por grupo de servidores</td><td>É a regra mais simples de implementar e explicar. Em troca, mapas já alinhados podem esperar atrás de novos mapas</td><td>Prioridade para os produtos; servidores separados por etapa</td></tr>
+          <tr><td>Comparar atual e um servidor extra no pico</td><td>Responde à decisão de investimento: mais capacidade em paralelo no grupo que é o gargalo</td><td>Atual, +1 e +2 servidores; dobrar os servidores</td></tr>
+          <tr><td>Meta de 10 min</td><td>Com os tempos do benchmark, um mapa de 200 imagens leva cerca de 8 min sem fila; com 5 min, o P90 nunca atingiria a meta</td><td>5 min (inviável com os tempos reais); 5 min com voos de até 120 imagens</td></tr>
+          <tr><td>Demanda de 100 mapas por noite</td><td>Deixa o cenário atual perto de 90% de ocupação no pico com poucos servidores, o que mantém a animação legível</td><td>250 mapas por noite, com cerca de 9 servidores</td></tr>
           <tr><td>Chegadas Triangular(17h, 18h30, 21h)</td><td>Representam o retorno concentrado das equipes e fazem a fila crescer</td><td>Poisson em janela fixa; pulsos por empresa</td></tr>
-          <tr><td>Contagem: mapas fora do prazo</td><td>Reage à GPU extra e ajuda a comparar os cenários</td><td>Mapas reenviados; mapas concluídos</td></tr>
+          <tr><td>Contagem: mapas fora do prazo</td><td>Reage ao servidor extra e ajuda a comparar os cenários</td><td>Mapas reenviados; mapas concluídos</td></tr>
+          <tr><td>Ordem do documento segue a apresentação</td><td>Contexto agrícola, plataforma e só então o modelo, o que facilita a leitura por quem não acompanhou as decisões</td><td>Ordem "sistema → modelo"</td></tr>
         </tbody>
       </table>
     </div>
@@ -647,25 +859,39 @@
     <p class="sobrelinha">Pendências</p>
     <h2>Pontos a verificar</h2>
     <ul class="lista-verificar">
-      <li><strong>Valores das distribuições:</strong> verificar e justificar cada um.</li>
+      <li><strong>Valores sem fonte:</strong> validação, falta de arquivos e correção.</li>
+      <li><strong>Variação dos tempos:</strong> o benchmark dá um valor por etapa; a variação de ±20% é uma suposição do grupo.</li>
       <li><strong>Meta de mapas fora do prazo:</strong> confirmar o limite de 10% e definir o valor absoluto.</li>
-      <li><strong>Gargalo:</strong> confirmar que está nas GPUs de alta capacidade. Pela conta manual no instante de maior demanda (cerca de 125 mapas/h), elas ficariam perto de 90% de ocupação, e as comuns perto de 45%. Se o gargalo estiver nas comuns, a GPU extra pode não alterar o P90.</li>
-      <li><strong>Sensibilidade da comparação:</strong> confirmar que o cenário atual fica perto da meta. Se o sistema folgar nos dois cenários, a comparação não mostrará diferença.</li>
-      <li><strong>Peso dos reenvios:</strong> os 5% de falha ficam perto dos 10% tolerados pelo P90. Confirmar que os mapas com correção não determinam o P90 sozinhos.</li>
-      <li><strong>Hipótese de mapas pequenos:</strong> buscar fonte para os tempos de fotogrametria.</li>
+      <li><strong>Formato do entregável:</strong> o enunciado pede o modelo em caderno. Confirmar com o professor se os scripts são aceitos ou gerar um <code>.ipynb</code> que chame os scripts.</li>
+      <li><strong>Fontes da introdução:</strong> buscar referências para o uso de mapas topográficos no dimensionamento de irrigação e para o NDVI.</li>
     </ul>
+    <p class="legenda">Já confirmados na simulação (seção 5): o gargalo está nos servidores de voos grandes; o cenário atual fica perto da meta, e a comparação mostra diferença conclusiva; os reenvios não determinam o P90 (sem os mapas com reenvio, 5,2% do total, o P90 do cenário atual cai só de 9,47 para 9,33 min).</p>
   </section>
 
   <section id="proximos-passos">
     <p class="sobrelinha">Continuação</p>
     <h2>Próximos passos</h2>
+    <p><strong>Feito:</strong> modelo em SimPy, 30 replicações por cenário com IC, gráficos de resultados, conclusões e recomendações (<a href="#implementacao">seção 3.6</a> e <a href="#resultados">seção 5</a>).</p>
+    <p><strong>A fazer:</strong></p>
     <ol>
-      <li>Verificar os valores das distribuições.</li>
-      <li>Implementar o modelo em caderno Python com SimPy, usando como referência <code>../grau-a/api_simulator.py</code> e <code>../grau-a/executar_replicacoes.py</code>, sem depender desses arquivos.</li>
-      <li>Rodar os cenários e calcular os indicadores e os IC.</li>
-      <li>Gerar os gráficos e a animação em MP4 com <code>FuncAnimation</code>.</li>
-      <li>Escrever o relatório, com a declaração de uso de IA, e preparar os slides.</li>
+      <li>Gerar a animação em MP4 com <code>FuncAnimation</code>, a partir das amostras do monitor (requisito f).</li>
+      <li>Buscar fontes para os tempos de validação, a falta de arquivos e o tempo de correção.</li>
+      <li>Confirmar o formato do entregável do modelo (scripts ou caderno).</li>
       <li>Obter no Moodle o template do relatório e confirmar a data de entrega.</li>
+      <li>Escrever o relatório, com a declaração de uso de IA, e preparar os slides com o vídeo.</li>
+    </ol>
+  </section>
+
+  <section id="referencias">
+    <p class="sobrelinha">Fontes</p>
+    <h2>Referências</h2>
+    <ol class="referencias">
+      <li id="ref-1">VALOR ECONÔMICO. Número de drones cresceu 12 vezes em cinco anos. <em>Valor Econômico</em>, especial Agronegócio, 27 abr. 2026. Disponível em: <a href="https://valor.globo.com/publicacoes/especiais/agronegocio/noticia/2026/04/27/numero-de-drones-cresceu-12-vezes-em-cinco-anos.ghtml">valor.globo.com</a>. Usada para: cerca de 35 mil drones agrícolas no Brasil (seção 1.1).</li>
+      <li id="ref-2">WDDRONES. Tutorial completo DJI SmartFarm Web (2025). <em>YouTube</em>, 2025. Disponível em: <a href="https://www.youtube.com/watch?v=7vQuAK239-k&amp;t=32s">youtube.com/watch?v=7vQuAK239-k</a>. Usada para: mapeamento de 14 ha em cerca de 23 minutos de voo (seção 1.3), com 87 fotos JPG de 11,7 MB cada (seções 2.1 e 4.2).</li>
+      <li id="ref-3">AMERICA AGRICOLA. Como gerar ortomosaico e modelo digital de superfície no SmartFarm Web | DJI | Victor Agostinho. <em>YouTube</em>. Disponível em: <a href="https://www.youtube.com/watch?v=44Iz9D4oGvk&amp;t=612s">youtube.com/watch?v=44Iz9D4oGvk</a>. Usada para: processamento de 12 ha em cerca de 5 minutos, aos 10:12 do vídeo (seções 2.2 e 4.2).</li>
+      <li id="ref-4">LAGERGREN, Evan. Exploring PIX4Dmatic hardware performance. <em>Puget Systems</em>, 26 nov. 2025. Disponível em: <a href="https://www.pugetsystems.com/labs/articles/exploring-pix4dmatic-hardware-performance/">pugetsystems.com</a>. Usada para: tempos por etapa com 100 imagens na RTX 5080 (calibration 86 s, dense point cloud 115 s, DSM 38 s, orthomosaic 19 s) e diferença de 5% a 9% entre GPUs (seções 2.3, 4.2 e 4.6).</li>
+      <li id="ref-5">PIX4D. Hardware and computer setup. <em>Pix4D Support</em>. Disponível em: <a href="https://support.pix4d.com/hc/en-us/articles/115003928846">support.pix4d.com</a>. Usada para: a CPU pesa mais que a GPU no tempo total, e a GPU reduz só o alinhamento, em 10% a 20% (seções 2.3 e 4.6).</li>
+      <li id="ref-6">FERREIRA, Carlos Y. M. et al. Edge computing in photogrammetry: performance and trade-offs of OpenDroneMap on NVIDIA Jetson Nano. In: ESCOLA REGIONAL DE ALTO DESEMPENHO DA REGIÃO NORDESTE (ERAD-NE), 7., 2026, Recife. <em>Anais</em> [...]. Porto Alegre: SBC, 2026. p. 29-32. DOI: <a href="https://doi.org/10.5753/erad-ne.2026.26672">10.5753/erad-ne.2026.26672</a>. Usada para: no OpenDroneMap, 46 imagens levaram 19 min 50 s em desktop, cerca de 26 s/imagem, com a GPU abaixo de 2% de uso (registro de decisões).</li>
     </ol>
   </section>
 

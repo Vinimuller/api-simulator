@@ -1,0 +1,15 @@
+cenario;indicador;unidade;media;desvio_padrao;ic95_inferior;ic95_superior
+Atual;P90 do lead time;min;9,471157;1,956589;8,740636;10,201677
+Atual;Mapas fora do prazo;mapas/noite;8,333333;6,944774;5,740403;10,926263
+Atual;Mapas fora do prazo;%;0,084616;0,067506;0,059412;0,109820
+Atual;Lead time médio;min;5,365883;0,648561;5,123734;5,608032
+Atual;Vazão;mapas/h;25,535029;2,537972;24,587441;26,482617
+Atual;Utilização voos pequenos;%;0,195237;0,036491;0,181613;0,208862
+Atual;Utilização voos grandes;%;0,474905;0,056458;0,453826;0,495984
+Servidor extra;P90 do lead time;min;7,103803;0,577524;6,888176;7,319430
+Servidor extra;Mapas fora do prazo;mapas/noite;0,666667;1,470007;0,117819;1,215515
+Servidor extra;Mapas fora do prazo;%;0,006540;0,013671;0,001435;0,011644
+Servidor extra;Lead time médio;min;4,573105;0,290416;4,464674;4,681536
+Servidor extra;Vazão;mapas/h;25,536839;2,536899;24,589652;26,484026
+Servidor extra;Utilização voos pequenos;%;0,195253;0,036494;0,181627;0,208878
+Servidor extra;Utilização voos grandes;%;0,356202;0,042319;0,340402;0,372003

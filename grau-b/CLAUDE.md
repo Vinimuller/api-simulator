@@ -10,9 +10,13 @@ O enunciado completo está em `docs/Trabalho do Grau B - Enunciado.pdf` e preval
 
 Plataforma que recebe imagens de drone e as processa até gerar um mapa, similar ao DJI SmartFarm.
 
-## Pendências antes de modelar
+## Estado atual
 
 - [x] Registrar o trabalho na Wiki da disciplina (obrigatório antes de iniciar a construção do modelo).
+- [x] Modelo conceitual (`docs/modelo_conceitual.md` e `.html`).
+- [x] Modelo implementado em `simulacao/`, com os dois cenários, 30 replicações cada, IC e gráficos de resultados (requisitos a–e, g, h).
+- [x] Conclusões e recomendações na seção 5 do modelo conceitual (requisito i).
+- [ ] Animação em MP4 (requisito f e vídeo da seção 4).
 - [ ] Obter o template do relatório no Moodle.
 - [ ] Confirmar a data de entrega na tarefa do Moodle (o enunciado não informa a data).
 
@@ -72,21 +76,35 @@ Apresentação presencial no dia da entrega, de 8 a 12 minutos, seguida de pergu
 - **IA:** permitida como assistente, com declaração no relatório. Os integrantes precisam saber explicar cada decisão de modelagem, então registre o porquê das decisões e não apenas o resultado.
 - **Comunicação:** poucos indicadores relevantes, com unidade em cada número. A animação ilustra o comportamento, mas as conclusões devem se apoiar na evidência estatística.
 
-## Modelo definido
+## Modelo implementado
 
-O modelo completo, com o porquê de cada decisão, está em `docs/modelo_conceitual.md`. Em resumo:
+O modelo completo, com o porquê de cada decisão e os resultados, está em `docs/modelo_conceitual.md`. Em resumo:
 
-- **Ferramenta:** Python + SimPy.
+- **Ferramenta:** Python + SimPy, em scripts locais (sem notebook).
 - **Usuário e entidade:** prestador de serviço que envia os voos no fim do dia; cada voo dá origem a um mapa, a entidade do modelo.
-- **Fluxo:** validação em CPU, rota por `num_imagens`, alinhamento em GPU, ortomosaico e modelo de elevação em paralelo, notificação.
+- **Fluxo:** validação em CPU, rota por `num_imagens` para servidores de voos pequenos ou grandes, alinhamento, ortomosaico e modelo de elevação em paralelo, notificação.
 - **Decisões:** por probabilidade, a falta de arquivos na validação, com reenvio dos faltantes; por condição, a rota por número de imagens.
-- **Indicadores:** P90 do lead time (principal), com meta de até 5 min, e mapas fora do prazo por noite.
-- **Cenários:** no pico, atual (2 GPUs comuns + 2 de alta capacidade) contra uma GPU de alta capacidade a mais.
+- **Tempos de processamento:** por imagem, do benchmark da Puget Systems com PIX4Dmatic (alinhamento 0,86 s, elevação 1,53 s, ortomosaico 0,19 s), com ±20% assumido. Todos os servidores têm a mesma velocidade, porque a GPU muda pouco o tempo total.
+- **Indicadores:** P90 do lead time (principal), com meta de até 10 min, e mapas fora do prazo por noite.
+- **Cenários:** no pico, com 100 mapas por noite, atual (2 servidores de voos pequenos + 3 de voos grandes) contra um servidor de voos grandes a mais.
+
+## Programa
+
+O código fica em `simulacao/` e roda localmente como scripts Python (sem notebook), a partir dessa pasta:
+
+- `modelo.py`: parâmetros, modelo SimPy, `executar_simulacao(cenario, semente)` e `calcular_metricas(...)`. Rodado sozinho, imprime uma noite de cada cenário.
+- `executar_cenarios.py`: 30 replicações por cenário, com números aleatórios comuns, e IC de 95%. Grava os CSV em `simulacao/resultados/`.
+- `graficos.py`: gera os PNG de resultados em `simulacao/resultados/graficos/`.
+
+Comandos, a partir de `simulacao/`: `../../.venv/bin/python executar_cenarios.py` e `../../.venv/bin/python graficos.py`. A seção 3.6 do modelo conceitual liga cada elemento do modelo ao código.
+
+**Resultados:** P90 do lead time de 9,47 min, IC [8,74; 10,20], no cenário atual, contra 7,10 min, IC [6,89; 7,32], com o servidor extra. A diferença é conclusiva. Os números do modelo conceitual e do README estão escritos à mão: se o código mudar, atualize-os junto com os gráficos.
 
 ## Decisões em aberto
 
-- **Parâmetros:** os valores das distribuições são iniciais; falta verificar e justificar cada um.
+- **Parâmetros:** validação, falta de arquivos e correção ainda não têm fonte.
 - **Meta de mapas fora do prazo:** o limite de 10% dos mapas da noite é uma proposta a confirmar.
+- **Formato do entregável do modelo:** o enunciado pede um caderno; o projeto usa scripts. Confirmar se são aceitos ou gerar um `.ipynb` que chame os scripts.
 
 ## Reaproveitamento do Grau A
 
@@ -101,4 +119,4 @@ O modelo completo, com o porquê de cada decisão, está em `docs/modelo_conceit
 - Identificadores, comentários e saídas em pt-BR.
 - Parâmetros como constantes nomeadas no topo, sem CLI ou argparse.
 - Sementes fixas, para que os resultados sejam reproduzíveis.
-- O `.venv` fica na raiz do repositório: `../.venv/bin/python` quando executado a partir de `grau-b/`.
+- O `.venv` fica na raiz do repositório: `../.venv/bin/python` a partir de `grau-b/` e `../../.venv/bin/python` a partir de `grau-b/simulacao/`.
