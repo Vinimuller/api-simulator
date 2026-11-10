@@ -6,7 +6,7 @@ Trabalhos da disciplina Simulação e Modelagem de Sistemas (Ciência da Computa
 
 Estudo de simulação de uma plataforma que recebe as imagens de voos de drone e gera mapas topográficos (ortomosaico e modelo de elevação). A pergunta central é se a capacidade atual de servidores cumpre a meta de 10 minutos no pico do fim do dia ou se vale a pena colocar mais um servidor em paralelo.
 
-**Situação:** o modelo está implementado em Python e SimPy, e os dois cenários já foram simulados, com 30 replicações cada. Faltam a animação em MP4, o relatório e os slides.
+**Situação:** todos os entregáveis estão prontos — modelo em Python e SimPy (scripts modulares e caderno Jupyter autocontido `simulacao_drones_tgb.ipynb`), simulação dos dois cenários com 30 replicações cada, animação em vídeo MP4 (`animacao_modelo.mp4`), relatório final (`Trabalho do Grau B - Relatorio Final.docx`) e slides da apresentação (`Apresentacao_Grau_B_Drones.pptx`).
 
 ### Por onde começar
 
@@ -28,6 +28,7 @@ cd grau-b/simulacao
 ../../.venv/bin/python modelo.py              # uma noite de cada cenário, com os indicadores
 ../../.venv/bin/python executar_cenarios.py   # 30 replicações por cenário e IC de 95%
 ../../.venv/bin/python graficos.py            # gráficos em resultados/graficos/
+../../.venv/bin/python animacao.py            # vídeo MP4 em resultados/animacao_modelo.mp4
 ```
 
 Os resultados (CSV e PNG) ficam em `grau-b/simulacao/resultados/`. As sementes são fixas, então os números se repetem a cada execução.

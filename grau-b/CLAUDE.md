@@ -16,9 +16,10 @@ Plataforma que recebe imagens de drone e as processa até gerar um mapa, similar
 - [x] Modelo conceitual (`docs/modelo_conceitual.md` e `.html`).
 - [x] Modelo implementado em `simulacao/`, com os dois cenários, 30 replicações cada, IC e gráficos de resultados (requisitos a–e, g, h).
 - [x] Conclusões e recomendações na seção 5 do modelo conceitual (requisito i).
-- [ ] Animação em MP4 (requisito f e vídeo da seção 4).
-- [ ] Obter o template do relatório no Moodle.
-- [ ] Confirmar a data de entrega na tarefa do Moodle (o enunciado não informa a data).
+- [x] Animação em MP4 (`simulacao/animacao.py` e `simulacao/resultados/animacao_modelo.mp4` — requisito f e vídeo da seção 4).
+- [x] Caderno executável autocontido (`simulacao/simulacao_drones_tgb.ipynb`).
+- [x] Relatório final no template da disciplina (`docs/Trabalho do Grau B - Relatorio Final.docx`).
+- [x] Slides da apresentação (`docs/Apresentacao_Grau_B_Drones.pptx`).
 
 ## Requisitos mínimos do modelo (seção 3)
 
@@ -90,11 +91,13 @@ O modelo completo, com o porquê de cada decisão e os resultados, está em `doc
 
 ## Programa
 
-O código fica em `simulacao/` e roda localmente como scripts Python (sem notebook), a partir dessa pasta:
+O código fica em `simulacao/` e pode ser executado tanto pelo caderno Jupyter (`simulacao_drones_tgb.ipynb`) quanto como scripts Python locais a partir dessa pasta:
 
 - `modelo.py`: parâmetros, modelo SimPy, `executar_simulacao(cenario, semente)` e `calcular_metricas(...)`. Rodado sozinho, imprime uma noite de cada cenário.
 - `executar_cenarios.py`: 30 replicações por cenário, com números aleatórios comuns, e IC de 95%. Grava os CSV em `simulacao/resultados/`.
 - `graficos.py`: gera os PNG de resultados em `simulacao/resultados/graficos/`.
+- `animacao.py`: executa o modelo com processo `monitor`, monta os quadros com `FuncAnimation` e exporta `resultados/animacao_modelo.mp4` (e `.html`).
+- `simulacao_drones_tgb.ipynb`: caderno Jupyter autocontido (compatível com Colab e execução local) com modelo, replicações, gráficos e geração da animação MP4.
 
 Comandos, a partir de `simulacao/`: `../../.venv/bin/python executar_cenarios.py` e `../../.venv/bin/python graficos.py`. A seção 3.6 do modelo conceitual liga cada elemento do modelo ao código.
 
